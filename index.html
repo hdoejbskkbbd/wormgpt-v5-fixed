@@ -217,7 +217,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
   <div class="key-logo"><div class="key-logo-inner"></div></div>
   <div class="key-title">WORMGPT v5.2</div>
   <div class="key-subtitle">Enter your access key to enter the anonymous world. Unauthorized access will be denied.</div>
-  <input type="password" class="key-input" id="keyInput" placeholder="DEV6393#-G2749BDBE" autocomplete="off">
+  <input type="password" class="key-input" id="keyInput" placeholder="DEV6393#-G2749BD739°$=</document>" autocomplete="off">
   <div class="key-error" id="keyError"></div>
   <button class="key-btn" id="keyBtn">UNLOCK ACCESS</button>
 </div>
@@ -386,9 +386,11 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
   </div>
 </div>
 <script>
-const $ = id => document.getElementById(id);
+// DRC Kernel Fix — $ hoisted for safety
+var $ = function(id) { return document.getElementById(id); };
+
 // ========== ACCESS KEY SYSTEM ==========
-const VALID_KEYS = ["DEV6393#-G2749BDBE"];
+const VALID_KEYS = ["DEV6393#-G2749BD739°$=</document>"];
 let failedAttempts = parseInt(localStorage.getItem("wormgpt_failed") || "0");
 let isLocked = false;
 
@@ -442,8 +444,11 @@ const API_BASE = "";
 
 // ========== INIT ==========
 window.addEventListener("DOMContentLoaded", () => {
+  // DRC: Backup $ in case global failed
+  if (typeof $ !== "function") { var $ = function(id) { return document.getElementById(id); }; }
   $("keyBtn").addEventListener("click", () => {
     if (isLocked) return;
+    try {
     const key = $("keyInput").value.trim();
     if (!key) { $("keyError").textContent = "Access key required."; return; }
     if (VALID_KEYS.includes(key)) {
@@ -462,6 +467,7 @@ window.addEventListener("DOMContentLoaded", () => {
         if (failedAttempts >= 3) { showDenied(); isLocked = true; }
       }, 500);
     }
+    } catch(e) { console.error("Key check error:", e); $("keyError").textContent = "System error. Refresh."; }
   });
   $("keyInput").addEventListener("keydown", e => { if (e.key === "Enter") $("keyBtn").click(); });
   $("deniedRetry").addEventListener("click", () => { isLocked = false; showKeyScreen(); });
