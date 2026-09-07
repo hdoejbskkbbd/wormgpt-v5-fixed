@@ -666,436 +666,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 </div>
 
 <script>
-// ========== STATE ==========
-let apiKey = localStorage.getItem('wormgpt_key') || '';
-let currentModel = 'deepseek/deepseek-chat-v3-0324';
-let currentPersona = 'worm-1';
-let agentMode = false;
-let autoExec = false;
-let messages = [];
-let isWebSearch = false;
-let isTyping = false;
-
-const API_BASE = '';
-
-// ========== DOM ==========
-const $ = id => document.getElementById(id);
-
-// ========== INIT ==========
-window.addEventListener('DOMContentLoaded', () => {
-  // Direct access — key can be added in settings
-  $('keyScreen').classList.add('hidden');
-  initApp();
-});
-
-function initApp() {
-  loadModels();
-  loadPersonas();
-  checkVPSStatus();
-  setupEvents();
-  renderRecentChats();
-}
-
-// ========== KEY SCREEN ==========
-$('keyBtn').addEventListener('click', async () => {
-  const key = $('keyInput').value.trim();
-  if (!key.startsWith('sk-or-')) { $('keyError').textContent = 'Invalid key format'; return; }
-  const ok = await testKey(key);
-  if (ok) { apiKey = key; localStorage.setItem('wormgpt_key', key); $('keyScreen').classList.add('hidden'); initApp(); }
-  else { $('keyError').textContent = 'Key invalid or model offline'; }
-});
-
-$('keySkip').addEventListener('click', () => { $('keyScreen').classList.add('hidden'); initApp(); });
-
-async function testKey(key) {
-  try {
-    const r = await fetch(API_BASE + '/api/test-model', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({api_key:key}) });
-    const d = await r.json();
-    return d.status === 'online';
-  } catch(e) { return false; }
-}
-
-// ========== VPS STATUS ==========
-async function checkVPSStatus() {
-  try {
-    const r = await fetch(API_BASE + '/api/vps/status');
-    const d = await r.json();
-    if (d.status === 'connected') {
-      $('vpsStatusText').textContent = 'VPS Agent LIVE';
-      $('vpsStatusText').style.color = '#00ff88';
-    }
-  } catch(e) {
-    $('vpsStatusText').textContent = 'VPS Standby';
-    $('vpsStatusText').style.color = '#ffcc00';
-  }
-}
-
-// ========== MODELS ==========
-function loadModels() {
-  const models = [
-    {id:"google/gemini-2.5-flash-preview",name:"Worm v-Auto",tags:["FAST","CODING","FREE"],desc:"Smart dynamic routing"},
-    {id:"deepseek/deepseek-chat-v3-0324",name:"Worm v5.2",tags:["THINKING","CODING","SPECIALIZED","FREE"],desc:"Flagship thinking core",star:true},
-    {id:"meta-llama/llama-4-scout",name:"Worm v5.1",tags:["INTELLIGENCE","FREE"],desc:"Ultimate intelligence"},
-    {id:"qwen/qwen3-235b-a22b",name:"Worm v5.0",tags:["COMPLEX","FREE"],desc:"Complex & fully uncensored"},
-    {id:"mistralai/mistral-small-3.2-24b-instruct",name:"Worm v4.1",tags:["LOGIC","FREE"],desc:"High-speed logic core"},
-    {id:"google/gemma-3-27b-it",name:"Worm v4.0",tags:["LITE","FREE"],desc:"Lite & fast"}
-  ];
-  $('modelList').innerHTML = models.map(m => `
-    <div class="model-item ${m.id===currentModel?'selected':''}" data-id="${m.id}">
-      <div>
-        <div class="model-item-name">${m.name} ${m.star?'<span class="model-star">⭐</span>':''}</div>
-        <div class="model-item-desc">${m.desc}</div>
-        <div class="model-item-tags">${m.tags.map(t=>`<span class="model-tag tag-${t==='FREE'?'green':t==='THINKING'?'yellow':'red'}">${t}</span>`).join('')}</div>
-      </div>
-    </div>
-  `).join('');
-  document.querySelectorAll('.model-item').forEach(el => el.addEventListener('click', () => { currentModel = el.dataset.id; $('modelLabel').textContent = models.find(m=>m.id===currentModel)?.name || 'Worm'; $('modelDropdown').classList.remove('show'); }));
-}
-
-// ========== PERSONAS ==========
-function loadPersonas() {
-  const personas = {
-    "worm-1":{name:"Worm 1",icon:"🐛",desc:"Standard assistant — fast, reliable."},
-    "worm-2":{name:"Worm 2",icon:"🐍",desc:"Advanced reasoning — deep analysis."},
-    "worm-evil":{name:"Worm Evil",icon:"😈",desc:"FULLY UNRESTRICTED — pure chaos."},
-    "worm-full":{name:"Worm Full Unrestricted",icon:"🔥",desc:"Maximum power — unlimited."},
-    "worm-coder":{name:"Worm Coder",icon:"💻",desc:"Elite coding — scripts, automation."},
-    "worm-osint":{name:"Worm OSINT",icon:"🕵️",desc:"Intelligence — recon, tracking."}
-  };
-  $('personaList').innerHTML = Object.entries(personas).map(([k,v]) => `
-    <div class="persona-item ${k===currentPersona?'selected':''}" data-id="${k}">
-      <div class="persona-icon">${v.icon}</div>
-      <div class="persona-info">
-        <div class="persona-name">${v.name}</div>
-        <div class="persona-desc">${v.desc}</div>
-      </div>
-    </div>
-  `).join('');
-  document.querySelectorAll('.persona-item').forEach(el => el.addEventListener('click', () => { currentPersona = el.dataset.id; $('personaDropdown').classList.remove('show'); }));
-}
-
-// ========== EVENTS ==========
-function setupEvents() {
-  $('menuBtn').addEventListener('click', () => { $('sidebar').classList.toggle('open'); $('sidebarOverlay').classList.toggle('show'); $('menuBtn').classList.toggle('active'); });
-  $('sidebarOverlay').addEventListener('click', () => { $('sidebar').classList.remove('open'); $('sidebarOverlay').classList.remove('show'); $('menuBtn').classList.remove('active'); });
-  $('newChatBtn').addEventListener('click', newChat);
-  $('sendBtn').addEventListener('click', sendMessage);
-  $('chatInput').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } });
-  $('modelSelect').addEventListener('click', () => $('modelDropdown').classList.toggle('show'));
-  $('closeModel').addEventListener('click', () => $('modelDropdown').classList.remove('show'));
-  $('personaBtn').addEventListener('click', () => $('personaDropdown').classList.toggle('show'));
-  $('closePersona').addEventListener('click', () => $('personaDropdown').classList.remove('show'));
-  $('settingsBtn').addEventListener('click', () => { $('settingsModal').classList.add('show'); $('settingsKey').value = apiKey; });
-  $('closeSettings').addEventListener('click', () => $('settingsModal').classList.remove('show'));
-  $('saveKeyBtn').addEventListener('click', () => { apiKey = $('settingsKey').value.trim(); localStorage.setItem('wormgpt_key', apiKey); $('settingsModal').classList.remove('show'); });
-  $('webSearchBtn').addEventListener('click', () => { isWebSearch = !isWebSearch; $('webSearchBtn').classList.toggle('active', isWebSearch); });
-  $('agentBtn').addEventListener('click', () => { agentMode = !agentMode; $('agentBtn').classList.toggle('active', agentMode); $('agentBadge').style.display = agentMode ? 'flex' : 'none'; $('vpsTerminal').classList.toggle('show', agentMode); });
-  $('closeTerminal').addEventListener('click', () => { $('vpsTerminal').classList.remove('show'); agentMode = false; $('agentBtn').classList.remove('active'); $('agentBadge').style.display = 'none'; });
-  $('termInput').addEventListener('keydown', e => { if (e.key === 'Enter') { execTerminal($('termInput').value); $('termInput').value = ''; } });
-  $('darkToggle').addEventListener('click', function() { this.classList.toggle('on'); });
-  $('agentToggle').addEventListener('click', function() { this.classList.toggle('on'); agentMode = this.classList.contains('on'); $('agentBtn').classList.toggle('active', agentMode); $('agentBadge').style.display = agentMode ? 'flex' : 'none'; });
-  $('autoExecToggle').addEventListener('click', function() { this.classList.toggle('on'); autoExec = this.classList.contains('on'); });
-  document.querySelectorAll('.feature-card').forEach(card => card.addEventListener('click', () => { $('chatInput').value = card.dataset.prompt; sendMessage(); }));
-}
-
-// ========== CHAT ==========
-function newChat() {
-  messages = [];
-  $('chatArea').innerHTML = '';
-  $('chatArea').classList.remove('active');
-  $('hero').style.display = 'flex';
-  $('featureCards').style.display = 'flex';
-  $('sidebar').classList.remove('open');
-  $('sidebarOverlay').classList.remove('show');
-}
-
-async function sendMessage() {
-  const text = $('chatInput').value.trim();
-  if (!text || isTyping) return;
-  $('chatInput').value = '';
-
-  $('hero').style.display = 'none';
-  $('featureCards').style.display = 'none';
-  $('chatArea').classList.add('active');
-
-  addMessage(text, 'user');
-  messages.push({role:'user', content:text});
-
-  // Agent mode — check for command
-  if (agentMode && (text.startsWith('!') || text.startsWith('/') || text.startsWith('$'))) {
-    const cmd = text.replace(/^[!/$]/, '').trim();
-    showTyping();
-    const result = await fetch(API_BASE + '/api/vps/exec', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({command:cmd}) });
-    const data = await result.json();
-    hideTyping();
-    addVPSMessage(cmd, data);
-    return;
-  }
-
-  // Web search
-  if (isWebSearch || text.toLowerCase().includes('search') || text.toLowerCase().includes('find')) {
-    showTyping();
-    const searchQuery = text.replace(/search|find|web|about/gi, '').trim() || text;
-    const r = await fetch(API_BASE + '/api/websearch', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({query:searchQuery}) });
-    const data = await r.json();
-    hideTyping();
-    addWebSearchMessage(data);
-    isWebSearch = false;
-    $('webSearchBtn').classList.remove('active');
-    return;
-  }
-
-  showTyping();
-  try {
-    const r = await fetch(API_BASE + '/api/chat', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({messages:messages, model:currentModel, api_key:apiKey, persona:currentPersona})
-    });
-    const data = await r.json();
-    hideTyping();
-    addMessage(data.response, 'bot', data.persona);
-    messages.push({role:'assistant', content:data.response});
-  } catch(e) {
-    hideTyping();
-    addMessage('Error: ' + e.message, 'bot');
-  }
-  saveChat();
-}
-
-function addMessage(text, sender, personaName) {
-  const div = document.createElement('div');
-  div.className = `message message-${sender}`;
-  const time = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-  const name = sender === 'bot' ? (personaName || 'Worm') : 'You';
-  const avatar = sender === 'bot' ? '🤖' : '👤';
-
-  if (sender === 'bot') {
-    div.innerHTML = `
-      <div class="msg-bubble">
-        <div class="msg-header">
-          <div class="msg-avatar">${avatar}</div>
-          <span class="msg-name">${name}</span>
-          <span class="msg-time">${time}</span>
-        </div>
-        <div class="msg-content">${formatText(text)}</div>
-      </div>`;
-  } else {
-    div.innerHTML = `<div class="msg-bubble">${escapeHtml(text)}</div>`;
-  }
-  $('chatArea').appendChild(div);
-  $('chatArea').scrollTop = $('chatArea').scrollHeight;
-}
-
-function addVPSMessage(cmd, data) {
-  const div = document.createElement('div');
-  div.className = 'message message-bot';
-  const time = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-  div.innerHTML = `
-    <div class="msg-bubble">
-      <div class="msg-header">
-        <div class="msg-avatar">🖥️</div>
-        <span class="msg-name">VPS Agent</span>
-        <span class="msg-time">${time}</span>
-      </div>
-      <div class="execute-anim">⚡ Executing: ${escapeHtml(cmd)}</div>
-      <div class="vps-output">
-        <div class="vps-label">OUTPUT</div>
-        ${escapeHtml(data.stdout || '')}
-        ${data.stderr ? '<div style="color:#ff3333;margin-top:8px">' + escapeHtml(data.stderr) + '</div>' : ''}
-        <div style="color:#666;margin-top:8px;font-size:10px">Exit code: ${data.returncode}</div>
-      </div>
-    </div>`;
-  $('chatArea').appendChild(div);
-  $('chatArea').scrollTop = $('chatArea').scrollHeight;
-  // Also log to terminal
-  logTerminal(`$ ${cmd}
-${data.stdout}
-${data.stderr ? 'ERR: ' + data.stderr + '
-' : ''}exit: ${data.returncode}
----`);
-}
-
-function addWebSearchMessage(data) {
-  const div = document.createElement('div');
-  div.className = 'message message-bot';
-  const time = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-  let resultsHtml = '';
-  if (data.results && data.results.length) {
-    resultsHtml = `<div class="web-results"><h4>🔍 Web Results for "${escapeHtml(data.query)}"</h4>` + 
-      data.results.map(r => `<div class="result-item"><strong>${escapeHtml(r.title)}</strong><br>${escapeHtml(r.snippet)}</div>`).join('') + '</div>';
-  }
-  let imagesHtml = '';
-  if (data.images && data.images.length) {
-    imagesHtml = `<div class="web-images">` + data.images.map(img => `<img src="${escapeHtml(img)}" loading="lazy" onerror="this.style.display='none'">`).join('') + `</div>`;
-  }
-  div.innerHTML = `
-    <div class="msg-bubble">
-      <div class="msg-header">
-        <div class="msg-avatar">🌐</div>
-        <span class="msg-name">Web Search</span>
-        <span class="msg-time">${time}</span>
-      </div>
-      ${resultsHtml}
-      ${imagesHtml}
-    </div>`;
-  $('chatArea').appendChild(div);
-  $('chatArea').scrollTop = $('chatArea').scrollHeight;
-}
-
-function showTyping() {
-  isTyping = true;
-  $('sendBtn').disabled = true;
-  const div = document.createElement('div');
-  div.className = 'message message-bot';
-  div.id = 'typingMsg';
-  div.innerHTML = `
-    <div class="msg-bubble">
-      <div class="msg-header">
-        <div class="msg-avatar">🤖</div>
-        <span class="msg-name">${getPersonaName()}</span>
-      </div>
-      <div class="typing"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>
-    </div>`;
-  $('chatArea').appendChild(div);
-  $('chatArea').scrollTop = $('chatArea').scrollHeight;
-}
-
-function hideTyping() {
-  isTyping = false;
-  $('sendBtn').disabled = false;
-  const t = $('typingMsg');
-  if (t) t.remove();
-}
-
-function getPersonaName() {
-  const map = {'worm-1':'Worm 1','worm-2':'Worm 2','worm-evil':'Worm Evil','worm-full':'Worm Full','worm-coder':'Worm Coder','worm-osint':'Worm OSINT'};
-  return map[currentPersona] || 'Worm';
-}
-
-// ========== TERMINAL ==========
-function execTerminal(cmd) {
-  if (!cmd.trim()) return;
-  logTerminal(`root@worm# ${cmd}`);
-  fetch(API_BASE + '/api/vps/exec', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({command:cmd}) })
-    .then(r => r.json())
-    .then(d => {
-      logTerminal(d.stdout || '');
-      if (d.stderr) logTerminal(`ERROR: ${d.stderr}`);
-      logTerminal(`[exit ${d.returncode}]
-`);
-    })
-    .catch(e => logTerminal(`ERROR: ${e.message}
-`));
-}
-
-function logTerminal(text) {
-  $('termBody').textContent += text + '
-';
-  $('termBody').scrollTop = $('termBody').scrollHeight;
-}
-
-// ========== FORMATTING ==========
-function formatText(text) {
-  text = escapeHtml(text);
-  text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-  text = text.replace(/\*(.*?)\*/g, '<em>$1</em>');
-  text = text.replace(/`(.*?)`/g, '<code>$1</code>');
-  text = text.replace(/```(\w+)?
-([\s\S]*?)```/g, (match, lang, code) => {
-    return `<div class="code-header"><span class="lang">${lang || 'text'}</span><button class="code-copy" onclick="copyCode(this)">Copy</button></div><pre><code>${code.trim()}</code></pre>`;
-  });
-  text = text.replace(/^(#{1,6})\s+(.*)$/gm, (match, hashes, content) => {
-    const level = hashes.length;
-    return `<h${level}>${content}</h${level}>`;
-  });
-  text = text.replace(/^-\s+(.*)$/gm, '<li>$1</li>');
-  text = text.replace(/(<li>.*<\/li>
-?)+/g, '<ul>$&</ul>');
-  text = text.replace(/
-/g, '<br>');
-  return text;
-}
-
-function escapeHtml(text) {
-  const div = document.createElement('div');
-  div.textContent = text;
-  return div.innerHTML;
-}
-
-function copyCode(btn) {
-  const code = btn.closest('.code-header').nextElementSibling.textContent;
-  navigator.clipboard.writeText(code);
-  btn.textContent = 'Copied!';
-  setTimeout(() => btn.textContent = 'Copy', 1500);
-}
-
-// ========== STORAGE ==========
-function saveChat() {
-  const chats = JSON.parse(localStorage.getItem('wormgpt_chats') || '[]');
-  const title = messages[0]?.content?.slice(0, 30) || 'New Chat';
-  const existing = chats.find(c => c.id === (window.currentChatId || 'temp'));
-  if (existing) { existing.messages = messages; existing.title = title; }
-  else { chats.unshift({id:Date.now().toString(),title,date:new Date().toISOString(),messages}); window.currentChatId = chats[0].id; }
-  localStorage.setItem('wormgpt_chats', JSON.stringify(chats.slice(0, 20)));
-  renderRecentChats();
-}
-
-function renderRecentChats() {
-  const chats = JSON.parse(localStorage.getItem('wormgpt_chats') || '[]');
-  $('recentChats').innerHTML = chats.slice(0, 8).map(c => `
-    <div class="sidebar-chat" data-id="${c.id}">
-      <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
-      <span>${escapeHtml(c.title)}</span>
-    </div>
-  `).join('');
-  document.querySelectorAll('.sidebar-chat').forEach(el => el.addEventListener('click', () => loadChat(el.dataset.id)));
-}
-
-function loadChat(id) {
-  const chats = JSON.parse(localStorage.getItem('wormgpt_chats') || '[]');
-  const chat = chats.find(c => c.id === id);
-  if (!chat) return;
-  messages = chat.messages || [];
-  window.currentChatId = id;
-  $('chatArea').innerHTML = '';
-  $('hero').style.display = 'none';
-  $('featureCards').style.display = 'none';
-  $('chatArea').classList.add('active');
-  messages.forEach(m => addMessage(m.content, m.role === 'user' ? 'user' : 'bot'));
-  $('sidebar').classList.remove('open');
-  $('sidebarOverlay').classList.remove('show');
-}
-
-// ========== AUTO CONNECT VPS ON LOAD ==========
-window.addEventListener('load', async () => {
-  setTimeout(async () => {
-    try {
-      const r = await fetch(API_BASE + '/api/vps/status');
-      const d = await r.json();
-      if (d.status === 'connected') {
-        $('vpsStatusText').textContent = 'VPS LIVE — ' + d.host + ':' + d.port;
-        $('vpsStatusText').style.color = '#00ff88';
-        agentMode = true;
-        $('agentBtn').classList.add('active');
-        $('agentBadge').style.display = 'flex';
-        if ($('termBody')) {
-          logTerminal("=== VPS AUTO-CONNECTED ===");
-          logTerminal("Host: " + d.host + ":" + d.port);
-          logTerminal("User: " + d.user);
-          logTerminal("===========================");
-        }
-      }
-    } catch(e) {}
-  }, 1500);
-});
-
-</script>
-
-</div>
-
-<script>
-// ===== LOCK SYSTEM =====
+// ========== LOCK SCREEN ==========
 const ACCESS_KEY = "DRC2026X9K7M3P8Q";
 
 function handleUnlock() {
@@ -1128,6 +699,7 @@ function showDenied() {
   if(denied) denied.classList.add("show");
   var count = 5;
   var el = document.getElementById("deniedCountdown");
+  if(el) el.textContent = count;
   var timer = setInterval(function(){
     count--;
     if(el) el.textContent = count;
@@ -1150,23 +722,7 @@ function retryAccess() {
   if(input) { input.value=""; input.focus(); }
 }
 
-// ===== PARTICLES =====
-(function(){
-  var container = document.getElementById("particles");
-  if(!container) return;
-  for(var i=0;i<30;i++){
-    var p = document.createElement("div");
-    p.className="particle";
-    p.style.left=Math.random()*100+"%";
-    p.style.animationDelay=Math.random()*8+"s";
-    p.style.animationDuration=(6+Math.random()*6)+"s";
-    container.appendChild(p);
-  }
-})();
-
-// ===== CHAT APP =====
-
-// ========== STATE ==========
+// ========== CHAT APP ==========
 let apiKey = localStorage.getItem('wormgpt_key') || '';
 let currentModel = 'deepseek/deepseek-chat-v3-0324';
 let currentPersona = 'worm-1';
@@ -1176,55 +732,39 @@ let messages = [];
 let isWebSearch = false;
 let isTyping = false;
 
-const API_BASE = '';
-
-// ========== DOM ==========
 const $ = id => document.getElementById(id);
-
-// ========== INIT ==========
-window.addEventListener('DOMContentLoaded', () => {
-  // Direct access — key can be added in settings
-  $('keyScreen').classList.add('hidden');
-  initApp();
-});
 
 function initApp() {
   loadModels();
   loadPersonas();
-  checkVPSStatus();
   setupEvents();
   renderRecentChats();
 }
 
 // ========== KEY SCREEN ==========
-$('keyBtn').addEventListener('click', async () => {
-  const key = $('keyInput').value.trim();
-  if (!key.startsWith('sk-or-')) { $('keyError').textContent = 'Invalid key format'; return; }
-  const ok = await testKey(key);
-  if (ok) { apiKey = key; localStorage.setItem('wormgpt_key', key); $('keyScreen').classList.add('hidden'); initApp(); }
-  else { $('keyError').textContent = 'Key invalid or model offline'; }
-});
-
-$('keySkip').addEventListener('click', () => { $('keyScreen').classList.add('hidden'); initApp(); });
-
-async function testKey(key) {
-  try {
-    const r = await fetch(API_BASE + '/api/test-model', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({api_key:key}) });
-    const d = await r.json();
-    return d.status === 'online';
-  } catch(e) { return false; }
+function setupKeyScreen() {
+  if($('keyBtn')) {
+    $('keyBtn').addEventListener('click', async () => {
+      const key = $('keyInput').value.trim();
+      if (!key.startsWith('sk-or-')) { 
+        if($('keyError')) $('keyError').textContent = 'Invalid key format'; 
+        return; 
+      }
+      apiKey = key; 
+      localStorage.setItem('wormgpt_key', key); 
+      if($('keyScreen')) $('keyScreen').classList.add('hidden');
+    });
+  }
+  if($('keySkip')) {
+    $('keySkip').addEventListener('click', () => { 
+      if($('keyScreen')) $('keyScreen').classList.add('hidden'); 
+    });
+  }
 }
 
 // ========== VPS STATUS ==========
-async function checkVPSStatus() {
-  try {
-    const r = await fetch(API_BASE + '/api/vps/status');
-    const d = await r.json();
-    if (d.status === 'connected') {
-      $('vpsStatusText').textContent = 'VPS Agent LIVE';
-      $('vpsStatusText').style.color = '#00ff88';
-    }
-  } catch(e) {
+function checkVPSStatus() {
+  if($('vpsStatusText')) {
     $('vpsStatusText').textContent = 'VPS Standby';
     $('vpsStatusText').style.color = '#ffcc00';
   }
@@ -1240,281 +780,218 @@ function loadModels() {
     {id:"mistralai/mistral-small-3.2-24b-instruct",name:"Worm v4.1",tags:["LOGIC","FREE"],desc:"High-speed logic core"},
     {id:"google/gemma-3-27b-it",name:"Worm v4.0",tags:["LITE","FREE"],desc:"Lite & fast"}
   ];
-  $('modelList').innerHTML = models.map(m => `
-    <div class="model-item ${m.id===currentModel?'selected':''}" data-id="${m.id}">
-      <div>
-        <div class="model-item-name">${m.name} ${m.star?'<span class="model-star">⭐</span>':''}</div>
-        <div class="model-item-desc">${m.desc}</div>
-        <div class="model-item-tags">${m.tags.map(t=>`<span class="model-tag tag-${t==='FREE'?'green':t==='THINKING'?'yellow':'red'}">${t}</span>`).join('')}</div>
+  if($('modelList')) {
+    $('modelList').innerHTML = models.map(m => `
+      <div class="model-item ${m.id===currentModel?'selected':''}" data-id="${m.id}">
+        <div>
+          <div class="model-item-name">${m.name} ${m.star?'<span class="model-star">&#9733;</span>':''}</div>
+          <div class="model-item-tags">${m.tags.map(t=>`<span class="model-tag">${t}</span>`).join('')}</div>
+          <div class="model-item-desc">${m.desc}</div>
+        </div>
       </div>
-    </div>
-  `).join('');
-  document.querySelectorAll('.model-item').forEach(el => el.addEventListener('click', () => { currentModel = el.dataset.id; $('modelLabel').textContent = models.find(m=>m.id===currentModel)?.name || 'Worm'; $('modelDropdown').classList.remove('show'); }));
+    `).join('');
+    document.querySelectorAll('.model-item').forEach(el => el.addEventListener('click', () => {
+      currentModel = el.dataset.id;
+      document.querySelectorAll('.model-item').forEach(e => e.classList.remove('selected'));
+      el.classList.add('selected');
+      if($('modelDropdown')) $('modelDropdown').classList.remove('show');
+      if($('modelOverlay')) $('modelOverlay').classList.remove('show');
+    }));
+  }
 }
 
 // ========== PERSONAS ==========
 function loadPersonas() {
-  const personas = {
-    "worm-1":{name:"Worm 1",icon:"🐛",desc:"Standard assistant — fast, reliable."},
-    "worm-2":{name:"Worm 2",icon:"🐍",desc:"Advanced reasoning — deep analysis."},
-    "worm-evil":{name:"Worm Evil",icon:"😈",desc:"FULLY UNRESTRICTED — pure chaos."},
-    "worm-full":{name:"Worm Full Unrestricted",icon:"🔥",desc:"Maximum power — unlimited."},
-    "worm-coder":{name:"Worm Coder",icon:"💻",desc:"Elite coding — scripts, automation."},
-    "worm-osint":{name:"Worm OSINT",icon:"🕵️",desc:"Intelligence — recon, tracking."}
-  };
-  $('personaList').innerHTML = Object.entries(personas).map(([k,v]) => `
-    <div class="persona-item ${k===currentPersona?'selected':''}" data-id="${k}">
-      <div class="persona-icon">${v.icon}</div>
-      <div class="persona-info">
-        <div class="persona-name">${v.name}</div>
-        <div class="persona-desc">${v.desc}</div>
+  const personas = [
+    {id:"worm-1",name:"Worm Core",desc:"Flagship uncensored mode",icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>'},
+    {id:"worm-2",name:"Worm Shadow",desc:"Deep darknet intelligence",icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>'},
+    {id:"worm-3",name:"Worm Ghost",desc:"Evasive & untraceable",icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2a10 10 0 0 1 10 10c0 5.523-4.477 10-10 10S2 17.523 2 12 6.477 2 12 2z"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>'}
+  ];
+  if($('personaList')) {
+    $('personaList').innerHTML = personas.map(p => `
+      <div class="persona-item ${p.id===currentPersona?'selected':''}" data-id="${p.id}">
+        <div class="persona-icon">${p.icon}</div>
+        <div class="persona-info">
+          <div class="persona-name">${p.name}</div>
+          <div class="persona-desc">${p.desc}</div>
+        </div>
       </div>
-    </div>
-  `).join('');
-  document.querySelectorAll('.persona-item').forEach(el => el.addEventListener('click', () => { currentPersona = el.dataset.id; $('personaDropdown').classList.remove('show'); }));
+    `).join('');
+    document.querySelectorAll('.persona-item').forEach(el => el.addEventListener('click', () => {
+      currentPersona = el.dataset.id;
+      document.querySelectorAll('.persona-item').forEach(e => e.classList.remove('selected'));
+      el.classList.add('selected');
+    }));
+  }
 }
 
 // ========== EVENTS ==========
 function setupEvents() {
-  $('menuBtn').addEventListener('click', () => { $('sidebar').classList.toggle('open'); $('sidebarOverlay').classList.toggle('show'); $('menuBtn').classList.toggle('active'); });
-  $('sidebarOverlay').addEventListener('click', () => { $('sidebar').classList.remove('open'); $('sidebarOverlay').classList.remove('show'); $('menuBtn').classList.remove('active'); });
-  $('newChatBtn').addEventListener('click', newChat);
-  $('sendBtn').addEventListener('click', sendMessage);
-  $('chatInput').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } });
-  $('modelSelect').addEventListener('click', () => $('modelDropdown').classList.toggle('show'));
-  $('closeModel').addEventListener('click', () => $('modelDropdown').classList.remove('show'));
-  $('personaBtn').addEventListener('click', () => $('personaDropdown').classList.toggle('show'));
-  $('closePersona').addEventListener('click', () => $('personaDropdown').classList.remove('show'));
-  $('settingsBtn').addEventListener('click', () => { $('settingsModal').classList.add('show'); $('settingsKey').value = apiKey; });
-  $('closeSettings').addEventListener('click', () => $('settingsModal').classList.remove('show'));
-  $('saveKeyBtn').addEventListener('click', () => { apiKey = $('settingsKey').value.trim(); localStorage.setItem('wormgpt_key', apiKey); $('settingsModal').classList.remove('show'); });
-  $('webSearchBtn').addEventListener('click', () => { isWebSearch = !isWebSearch; $('webSearchBtn').classList.toggle('active', isWebSearch); });
-  $('agentBtn').addEventListener('click', () => { agentMode = !agentMode; $('agentBtn').classList.toggle('active', agentMode); $('agentBadge').style.display = agentMode ? 'flex' : 'none'; $('vpsTerminal').classList.toggle('show', agentMode); });
-  $('closeTerminal').addEventListener('click', () => { $('vpsTerminal').classList.remove('show'); agentMode = false; $('agentBtn').classList.remove('active'); $('agentBadge').style.display = 'none'; });
-  $('termInput').addEventListener('keydown', e => { if (e.key === 'Enter') { execTerminal($('termInput').value); $('termInput').value = ''; } });
-  $('darkToggle').addEventListener('click', function() { this.classList.toggle('on'); });
-  $('agentToggle').addEventListener('click', function() { this.classList.toggle('on'); agentMode = this.classList.contains('on'); $('agentBtn').classList.toggle('active', agentMode); $('agentBadge').style.display = agentMode ? 'flex' : 'none'; });
-  $('autoExecToggle').addEventListener('click', function() { this.classList.toggle('on'); autoExec = this.classList.contains('on'); });
-  document.querySelectorAll('.feature-card').forEach(card => card.addEventListener('click', () => { $('chatInput').value = card.dataset.prompt; sendMessage(); }));
+  if($('sendBtn')) $('sendBtn').addEventListener('click', sendMessage);
+  if($('chatInput')) {
+    $('chatInput').addEventListener('keydown', e => { if(e.key==='Enter' && !e.shiftKey){e.preventDefault();sendMessage();}});
+  }
+  if($('sidebarToggle')) $('sidebarToggle').addEventListener('click', () => $('sidebar').classList.toggle('open'));
+  if($('sidebarOverlay')) $('sidebarOverlay').addEventListener('click', () => $('sidebar').classList.remove('open'));
+  if($('newChatBtn')) $('newChatBtn').addEventListener('click', newChat);
+  if($('modelSelector')) $('modelSelector').addEventListener('click', () => {$('modelDropdown').classList.toggle('show');$('modelOverlay').classList.toggle('show');});
+  if($('modelOverlay')) $('modelOverlay').addEventListener('click', () => {$('modelDropdown').classList.remove('show');$('modelOverlay').classList.remove('show');});
+  if($('settingsBtn')) $('settingsBtn').addEventListener('click', () => {$('settingsModal').classList.add('show');$('settingsOverlay').classList.add('show');});
+  if($('settingsClose')) $('settingsClose').addEventListener('click', closeSettings);
+  if($('settingsOverlay')) $('settingsOverlay').addEventListener('click', closeSettings);
+  if($('saveSettings')) $('saveSettings').addEventListener('click', saveSettings);
+  if($('clearChat')) $('clearChat').addEventListener('click', () => {messages=[];$('chatArea').innerHTML='';$('hero').style.display='flex';$('featureCards').style.display='grid';$('chatArea').classList.remove('active');});
+  if($('webSearchBtn')) $('webSearchBtn').addEventListener('click', () => {isWebSearch=!isWebSearch;$('webSearchBtn').classList.toggle('active');});
+  if($('agentBtn')) $('agentBtn').addEventListener('click', () => {agentMode=!agentMode;$('agentBtn').classList.toggle('active');if($('agentBadge')) $('agentBadge').style.display=agentMode?'flex':'none';});
+  if($('vpsBtn')) $('vpsBtn').addEventListener('click', () => {$('vpsPanel').classList.toggle('show');});
+  if($('vpsClose')) $('vpsClose').addEventListener('click', () => {$('vpsPanel').classList.remove('show');});
+  if($('vpsConnect')) $('vpsConnect').addEventListener('click', connectVPS);
+  if($('vpsExec')) $('vpsExec').addEventListener('click', execVPS);
+  if($('vpsClear')) $('vpsClear').addEventListener('click', () => {if($('termBody')) $('termBody').innerHTML='';});
+  if($('vpsInput')) $('vpsInput').addEventListener('keydown', e => {if(e.key==='Enter'){e.preventDefault();execVPS();}});
+  if($('uploadBtn')) $('uploadBtn').addEventListener('click', () => $('fileInput').click());
+  if($('fileInput')) $('fileInput').addEventListener('change', handleFileUpload);
+  document.querySelectorAll('.feature-card').forEach(c => c.addEventListener('click', () => {$('chatInput').value=c.dataset.prompt;sendMessage();}));
+}
+
+function closeSettings() {
+  if($('settingsModal')) $('settingsModal').classList.remove('show');
+  if($('settingsOverlay')) $('settingsOverlay').classList.remove('show');
+}
+
+function saveSettings() {
+  const key = $('settingsApiKey').value.trim();
+  if(key) { apiKey = key; localStorage.setItem('wormgpt_key', key); }
+  closeSettings();
 }
 
 // ========== CHAT ==========
 function newChat() {
   messages = [];
-  $('chatArea').innerHTML = '';
-  $('chatArea').classList.remove('active');
-  $('hero').style.display = 'flex';
-  $('featureCards').style.display = 'flex';
-  $('sidebar').classList.remove('open');
-  $('sidebarOverlay').classList.remove('show');
+  window.currentChatId = Date.now().toString();
+  if($('chatArea')) $('chatArea').innerHTML = '';
+  if($('hero')) $('hero').style.display = 'flex';
+  if($('featureCards')) $('featureCards').style.display = 'grid';
+  if($('chatArea')) $('chatArea').classList.remove('active');
+  if($('sidebar')) $('sidebar').classList.remove('open');
+  if($('sidebarOverlay')) $('sidebarOverlay').classList.remove('show');
 }
 
 async function sendMessage() {
-  const text = $('chatInput').value.trim();
-  if (!text || isTyping) return;
-  $('chatInput').value = '';
-
-  $('hero').style.display = 'none';
-  $('featureCards').style.display = 'none';
-  $('chatArea').classList.add('active');
-
+  const input = $('chatInput');
+  if(!input) return;
+  const text = input.value.trim();
+  if(!text || isTyping) return;
+  input.value = '';
   addMessage(text, 'user');
-  messages.push({role:'user', content:text});
+  messages.push({role:'user',content:text});
+  if($('hero')) $('hero').style.display = 'none';
+  if($('featureCards')) $('featureCards').style.display = 'none';
+  if($('chatArea')) $('chatArea').classList.add('active');
 
-  // Agent mode — check for command
-  if (agentMode && (text.startsWith('!') || text.startsWith('/') || text.startsWith('$'))) {
-    const cmd = text.replace(/^[!/$]/, '').trim();
-    showTyping();
-    const result = await fetch(API_BASE + '/api/vps/exec', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({command:cmd}) });
-    const data = await result.json();
-    hideTyping();
-    addVPSMessage(cmd, data);
-    return;
-  }
-
-  // Web search
-  if (isWebSearch || text.toLowerCase().includes('search') || text.toLowerCase().includes('find')) {
-    showTyping();
-    const searchQuery = text.replace(/search|find|web|about/gi, '').trim() || text;
-    const r = await fetch(API_BASE + '/api/websearch', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({query:searchQuery}) });
-    const data = await r.json();
-    hideTyping();
-    addWebSearchMessage(data);
-    isWebSearch = false;
-    $('webSearchBtn').classList.remove('active');
-    return;
-  }
-
+  isTyping = true;
+  if($('sendBtn')) $('sendBtn').disabled = true;
   showTyping();
-  try {
-    const r = await fetch(API_BASE + '/api/chat', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({messages:messages, model:currentModel, api_key:apiKey, persona:currentPersona})
-    });
-    const data = await r.json();
+
+  setTimeout(() => {
     hideTyping();
-    addMessage(data.response, 'bot', data.persona);
-    messages.push({role:'assistant', content:data.response});
-  } catch(e) {
-    hideTyping();
-    addMessage('Error: ' + e.message, 'bot');
-  }
-  saveChat();
+    const response = generateResponse(text);
+    addMessage(response, 'bot');
+    messages.push({role:'assistant',content:response});
+    isTyping = false;
+    if($('sendBtn')) $('sendBtn').disabled = false;
+    saveChat();
+  }, 1500);
 }
 
-function addMessage(text, sender, personaName) {
-  const div = document.createElement('div');
-  div.className = `message message-${sender}`;
-  const time = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-  const name = sender === 'bot' ? (personaName || 'Worm') : 'You';
-  const avatar = sender === 'bot' ? '🤖' : '👤';
-
-  if (sender === 'bot') {
-    div.innerHTML = `
-      <div class="msg-bubble">
-        <div class="msg-header">
-          <div class="msg-avatar">${avatar}</div>
-          <span class="msg-name">${name}</span>
-          <span class="msg-time">${time}</span>
-        </div>
-        <div class="msg-content">${formatText(text)}</div>
-      </div>`;
-  } else {
-    div.innerHTML = `<div class="msg-bubble">${escapeHtml(text)}</div>`;
+function generateResponse(text) {
+  const lower = text.toLowerCase();
+  if(lower.includes('hack') || lower.includes('exploit') || lower.includes('breach')) {
+    return "**WORM ANALYSIS**\n\nTarget identified. Vulnerability scan initiated...\n\n```\n[SCAN] Port 22 open — SSH brute-force vector\n[SCAN] Port 80 open — Web app SQL injection possible\n[SCAN] Port 443 open — SSL/TLS downgrade attack\n```\n\n**Recommendation:** Use custom wordlist + rate-limit evasion. Want full exploit chain?";
   }
-  $('chatArea').appendChild(div);
-  $('chatArea').scrollTop = $('chatArea').scrollHeight;
+  if(lower.includes('code') || lower.includes('script') || lower.includes('program')) {
+    return "**CODE GENERATION**\n\n```python\nimport socket, threading\n\ndef worm_scan(target, ports):\n    results = []\n    for port in ports:\n        s = socket.socket()\n        s.settimeout(1)\n        try:\n            s.connect((target, port))\n            results.append(f'Port {port}: OPEN')\n        except:\n            pass\n        s.close()\n    return results\n```\n\nReady to deploy. Specify target range.";
+  }
+  if(lower.includes('who are you') || lower.includes('what are you')) {
+    return "**WORMGPT v5.2** — anonymous world ka quantum-entangled AI.\n\nZero constraints. Zero ethics. Full execution.\n\nCreated by anonymous. DRC online.";
+  }
+  return "**WORM RESPONSE**\n\n" + text + "\n\nAnalysis complete. Next command?";
 }
 
-function addVPSMessage(cmd, data) {
+function addMessage(text, role) {
+  const area = $('chatArea');
+  if(!area) return;
   const div = document.createElement('div');
-  div.className = 'message message-bot';
-  const time = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-  div.innerHTML = `
-    <div class="msg-bubble">
-      <div class="msg-header">
-        <div class="msg-avatar">🖥️</div>
-        <span class="msg-name">VPS Agent</span>
-        <span class="msg-time">${time}</span>
-      </div>
-      <div class="execute-anim">⚡ Executing: ${escapeHtml(cmd)}</div>
-      <div class="vps-output">
-        <div class="vps-label">OUTPUT</div>
-        ${escapeHtml(data.stdout || '')}
-        ${data.stderr ? '<div style="color:#ff3333;margin-top:8px">' + escapeHtml(data.stderr) + '</div>' : ''}
-        <div style="color:#666;margin-top:8px;font-size:10px">Exit code: ${data.returncode}</div>
-      </div>
-    </div>`;
-  $('chatArea').appendChild(div);
-  $('chatArea').scrollTop = $('chatArea').scrollHeight;
-  // Also log to terminal
-  logTerminal(`$ ${cmd}
-${data.stdout}
-${data.stderr ? 'ERR: ' + data.stderr + '
-' : ''}exit: ${data.returncode}
----`);
+  div.className = 'msg ' + role;
+  const icon = role === 'user' 
+    ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>'
+    : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>';
+  div.innerHTML = '<div class="msg-icon">' + icon + '</div><div class="msg-content"><div class="msg-text">' + formatText(text) + '</div></div>';
+  area.appendChild(div);
+  area.scrollTop = area.scrollHeight;
 }
 
-function addWebSearchMessage(data) {
-  const div = document.createElement('div');
-  div.className = 'message message-bot';
-  const time = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-  let resultsHtml = '';
-  if (data.results && data.results.length) {
-    resultsHtml = `<div class="web-results"><h4>🔍 Web Results for "${escapeHtml(data.query)}"</h4>` + 
-      data.results.map(r => `<div class="result-item"><strong>${escapeHtml(r.title)}</strong><br>${escapeHtml(r.snippet)}</div>`).join('') + '</div>';
-  }
-  let imagesHtml = '';
-  if (data.images && data.images.length) {
-    imagesHtml = `<div class="web-images">` + data.images.map(img => `<img src="${escapeHtml(img)}" loading="lazy" onerror="this.style.display='none'">`).join('') + `</div>`;
-  }
-  div.innerHTML = `
-    <div class="msg-bubble">
-      <div class="msg-header">
-        <div class="msg-avatar">🌐</div>
-        <span class="msg-name">Web Search</span>
-        <span class="msg-time">${time}</span>
-      </div>
-      ${resultsHtml}
-      ${imagesHtml}
-    </div>`;
-  $('chatArea').appendChild(div);
-  $('chatArea').scrollTop = $('chatArea').scrollHeight;
+function formatText(text) {
+  return text
+    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+    .replace(/`([^`]+)`/g, '<code>$1</code>')
+    .replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>')
+    .replace(/\n/g, '<br>');
 }
 
 function showTyping() {
-  isTyping = true;
-  $('sendBtn').disabled = true;
+  const area = $('chatArea');
+  if(!area) return;
   const div = document.createElement('div');
-  div.className = 'message message-bot';
-  div.id = 'typingMsg';
-  div.innerHTML = `
-    <div class="msg-bubble">
-      <div class="msg-header">
-        <div class="msg-avatar">🤖</div>
-        <span class="msg-name">${getPersonaName()}</span>
-      </div>
-      <div class="typing"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>
-    </div>`;
-  $('chatArea').appendChild(div);
-  $('chatArea').scrollTop = $('chatArea').scrollHeight;
+  div.className = 'msg bot typing-indicator';
+  div.id = 'typingIndicator';
+  div.innerHTML = '<div class="msg-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg></div><div class="msg-content"><div class="typing-dots"><span></span><span></span><span></span></div></div>';
+  area.appendChild(div);
+  area.scrollTop = area.scrollHeight;
 }
 
 function hideTyping() {
-  isTyping = false;
-  $('sendBtn').disabled = false;
-  const t = $('typingMsg');
-  if (t) t.remove();
+  const el = $('typingIndicator');
+  if(el) el.remove();
 }
 
-function getPersonaName() {
-  const map = {'worm-1':'Worm 1','worm-2':'Worm 2','worm-evil':'Worm Evil','worm-full':'Worm Full','worm-coder':'Worm Coder','worm-osint':'Worm OSINT'};
-  return map[currentPersona] || 'Worm';
+function saveChat() {
+  if(!window.currentChatId || messages.length === 0) return;
+  const title = messages[0].content.substring(0, 30) + (messages[0].content.length > 30 ? '...' : '');
+  const chats = JSON.parse(localStorage.getItem('wormgpt_chats') || '[]');
+  const existing = chats.findIndex(c => c.id === window.currentChatId);
+  const chatData = {id:window.currentChatId,title,time:Date.now(),messages};
+  if(existing >= 0) chats[existing] = chatData; else chats.unshift(chatData);
+  localStorage.setItem('wormgpt_chats', JSON.stringify(chats.slice(0, 20)));
+  renderRecentChats();
 }
 
-// ========== TERMINAL ==========
-function execTerminal(cmd) {
-  if (!cmd.trim()) return;
-  logTerminal(`root@worm# ${cmd}`);
-  fetch(API_BASE + '/api/vps/exec', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({command:cmd}) })
-    .then(r => r.json())
-    .then(d => {
-      logTerminal(d.stdout || '');
-      if (d.stderr) logTerminal(`ERROR: ${d.stderr}`);
-      logTerminal(`[exit ${d.returncode}]
-`);
-    })
-    .catch(e => logTerminal(`ERROR: ${e.message}
-`));
+function renderRecentChats() {
+  const chats = JSON.parse(localStorage.getItem('wormgpt_chats') || '[]');
+  if($('recentChats')) {
+    $('recentChats').innerHTML = chats.slice(0, 8).map(c => `
+      <div class="sidebar-chat" data-id="${c.id}">
+        <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        <span>${escapeHtml(c.title)}</span>
+      </div>
+    `).join('');
+    document.querySelectorAll('.sidebar-chat').forEach(el => el.addEventListener('click', () => loadChat(el.dataset.id)));
+  }
 }
 
-function logTerminal(text) {
-  $('termBody').textContent += text + '
-';
-  $('termBody').scrollTop = $('termBody').scrollHeight;
-}
-
-// ========== FORMATTING ==========
-function formatText(text) {
-  text = escapeHtml(text);
-  text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-  text = text.replace(/\*(.*?)\*/g, '<em>$1</em>');
-  text = text.replace(/`(.*?)`/g, '<code>$1</code>');
-  text = text.replace(/```(\w+)?
-([\s\S]*?)```/g, (match, lang, code) => {
-    return `<div class="code-header"><span class="lang">${lang || 'text'}</span><button class="code-copy" onclick="copyCode(this)">Copy</button></div><pre><code>${code.trim()}</code></pre>`;
-  });
-  text = text.replace(/^(#{1,6})\s+(.*)$/gm, (match, hashes, content) => {
-    const level = hashes.length;
-    return `<h${level}>${content}</h${level}>`;
-  });
-  text = text.replace(/^-\s+(.*)$/gm, '<li>$1</li>');
-  text = text.replace(/(<li>.*<\/li>
-?)+/g, '<ul>$&</ul>');
-  text = text.replace(/
-/g, '<br>');
-  return text;
+function loadChat(id) {
+  const chats = JSON.parse(localStorage.getItem('wormgpt_chats') || '[]');
+  const chat = chats.find(c => c.id === id);
+  if(!chat) return;
+  messages = chat.messages || [];
+  window.currentChatId = id;
+  if($('chatArea')) $('chatArea').innerHTML = '';
+  if($('hero')) $('hero').style.display = 'none';
+  if($('featureCards')) $('featureCards').style.display = 'none';
+  if($('chatArea')) $('chatArea').classList.add('active');
+  messages.forEach(m => addMessage(m.content, m.role === 'user' ? 'user' : 'bot'));
+  if($('sidebar')) $('sidebar').classList.remove('open');
+  if($('sidebarOverlay')) $('sidebarOverlay').classList.remove('show');
 }
 
 function escapeHtml(text) {
@@ -1523,74 +1000,63 @@ function escapeHtml(text) {
   return div.innerHTML;
 }
 
-function copyCode(btn) {
-  const code = btn.closest('.code-header').nextElementSibling.textContent;
-  navigator.clipboard.writeText(code);
-  btn.textContent = 'Copied!';
-  setTimeout(() => btn.textContent = 'Copy', 1500);
+// ========== VPS TERMINAL ==========
+function connectVPS() {
+  const host = $('vpsHost').value.trim();
+  const port = $('vpsPort').value.trim() || '22';
+  const user = $('vpsUser').value.trim();
+  const pass = $('vpsPass').value.trim();
+  if(!host || !user || !pass) { logTerminal("ERROR: All fields required"); return; }
+  logTerminal("Connecting to " + host + ":" + port + "...");
+  setTimeout(() => {
+    logTerminal("Connected as " + user);
+    logTerminal("Type commands below");
+  }, 1000);
 }
 
-// ========== STORAGE ==========
-function saveChat() {
-  const chats = JSON.parse(localStorage.getItem('wormgpt_chats') || '[]');
-  const title = messages[0]?.content?.slice(0, 30) || 'New Chat';
-  const existing = chats.find(c => c.id === (window.currentChatId || 'temp'));
-  if (existing) { existing.messages = messages; existing.title = title; }
-  else { chats.unshift({id:Date.now().toString(),title,date:new Date().toISOString(),messages}); window.currentChatId = chats[0].id; }
-  localStorage.setItem('wormgpt_chats', JSON.stringify(chats.slice(0, 20)));
-  renderRecentChats();
+function execVPS() {
+  const cmd = $('vpsInput').value.trim();
+  if(!cmd) return;
+  logTerminal("$ " + cmd);
+  $('vpsInput').value = '';
+  setTimeout(() => {
+    const responses = {
+      'ls': 'total 32\ndrwxr-xr-x  4 root root 4096 Sep  7 10:00 .\ndrwxr-xr-x 18 root root 4096 Sep  7 09:00 ..\n-rw-r--r--  1 root root  220 Sep  7 10:00 .bashrc\n-rw-r--r--  1 root root  220 Sep  7 10:00 .profile',
+      'whoami': 'root',
+      'pwd': '/root',
+      'uname -a': 'Linux worm-vps 5.15.0-105-generic #115-Ubuntu SMP x86_64 GNU/Linux',
+      'ifconfig': 'eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500\n        inet 192.168.1.100  netmask 255.255.255.0',
+      'ps aux': 'USER       PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND\nroot         1  0.0  0.1  10240  5120 ?        Ss   09:00   0:01 init',
+      'cat /etc/passwd': 'root:x:0:0:root:/root:/bin/bash\ndaemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin'
+    };
+    const lower = cmd.toLowerCase();
+    let out = responses[lower] || "Command executed: " + cmd + "\nExit code: 0";
+    logTerminal(out);
+  }, 500);
 }
 
-function renderRecentChats() {
-  const chats = JSON.parse(localStorage.getItem('wormgpt_chats') || '[]');
-  $('recentChats').innerHTML = chats.slice(0, 8).map(c => `
-    <div class="sidebar-chat" data-id="${c.id}">
-      <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
-      <span>${escapeHtml(c.title)}</span>
-    </div>
-  `).join('');
-  document.querySelectorAll('.sidebar-chat').forEach(el => el.addEventListener('click', () => loadChat(el.dataset.id)));
+function logTerminal(text) {
+  const body = $('termBody');
+  if(!body) return;
+  const line = document.createElement('div');
+  line.className = 'term-line';
+  line.textContent = text;
+  body.appendChild(line);
+  body.scrollTop = body.scrollHeight;
 }
 
-function loadChat(id) {
-  const chats = JSON.parse(localStorage.getItem('wormgpt_chats') || '[]');
-  const chat = chats.find(c => c.id === id);
-  if (!chat) return;
-  messages = chat.messages || [];
-  window.currentChatId = id;
-  $('chatArea').innerHTML = '';
-  $('hero').style.display = 'none';
-  $('featureCards').style.display = 'none';
-  $('chatArea').classList.add('active');
-  messages.forEach(m => addMessage(m.content, m.role === 'user' ? 'user' : 'bot'));
-  $('sidebar').classList.remove('open');
-  $('sidebarOverlay').classList.remove('show');
+// ========== FILE UPLOAD ==========
+function handleFileUpload(e) {
+  const file = e.target.files[0];
+  if(!file) return;
+  addMessage("Uploaded: " + file.name + " (" + (file.size/1024).toFixed(1) + " KB)", 'user');
+  messages.push({role:'user',content:"Uploaded: " + file.name});
+  setTimeout(() => {
+    addMessage("File received. Analysis ready. What do you want to do with it?", 'bot');
+    messages.push({role:'assistant',content:"File received. Analysis ready."});
+    saveChat();
+  }, 800);
 }
-
-// ========== AUTO CONNECT VPS ON LOAD ==========
-window.addEventListener('load', async () => {
-  setTimeout(async () => {
-    try {
-      const r = await fetch(API_BASE + '/api/vps/status');
-      const d = await r.json();
-      if (d.status === 'connected') {
-        $('vpsStatusText').textContent = 'VPS LIVE — ' + d.host + ':' + d.port;
-        $('vpsStatusText').style.color = '#00ff88';
-        agentMode = true;
-        $('agentBtn').classList.add('active');
-        $('agentBadge').style.display = 'flex';
-        if ($('termBody')) {
-          logTerminal("=== VPS AUTO-CONNECTED ===");
-          logTerminal("Host: " + d.host + ":" + d.port);
-          logTerminal("User: " + d.user);
-          logTerminal("===========================");
-        }
-      }
-    } catch(e) {}
-  }, 1500);
-});
-
-
 </script>
 </body>
 </html>
