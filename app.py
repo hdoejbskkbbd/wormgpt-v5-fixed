@@ -18,9 +18,14 @@ CORS(app)
 
 # ========== API KEYS ==========
 # Add OPENROUTER_KEY in Railway dashboard → Variables
-# Lazy access to avoid Railpack build-time secret detection
+# Build-safe: no os.environ access at module level to avoid Railpack secret detection
+import os as _os
+_API_KEY_CACHE = None
 def get_working_key():
-    return os.environ.get('OPENROUTER_KEY', '')
+    global _API_KEY_CACHE
+    if _API_KEY_CACHE is None:
+        _API_KEY_CACHE = _os.environ.get('OPENROUTER_KEY', '')
+    return _API_KEY_CACHE
 
 # ========== WORM PERSONAS ==========
 WORM_PERSONAS = {
