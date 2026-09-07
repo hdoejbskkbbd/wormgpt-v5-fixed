@@ -817,6 +817,30 @@ function loadChat(id) {
   $('sidebar').classList.remove('open');
   $('sidebarOverlay').classList.remove('show');
 }
+
+// ========== AUTO CONNECT VPS ON LOAD ==========
+window.addEventListener('load', async () => {
+  setTimeout(async () => {
+    try {
+      const r = await fetch(API_BASE + '/api/vps/status');
+      const d = await r.json();
+      if (d.status === 'connected') {
+        $('vpsStatusText').textContent = 'VPS LIVE — ' + d.host + ':' + d.port;
+        $('vpsStatusText').style.color = '#00ff88';
+        agentMode = true;
+        $('agentBtn').classList.add('active');
+        $('agentBadge').style.display = 'flex';
+        if ($('termBody')) {
+          logTerminal("=== VPS AUTO-CONNECTED ===");
+          logTerminal("Host: " + d.host + ":" + d.port);
+          logTerminal("User: " + d.user);
+          logTerminal("===========================");
+        }
+      }
+    } catch(e) {}
+  }, 1500);
+});
+
 </script>
 </body>
 </html>
