@@ -18,14 +18,12 @@ CORS(app)
 
 # ========== API KEYS ==========
 # Add OPENROUTER_KEY in Railway dashboard → Variables
-# Build-safe: no os.environ access at module level to avoid Railpack secret detection
-import os as _os
-_API_KEY_CACHE = None
+# Build-safe: NO os.environ access at module level
+# Key is passed via request or loaded at runtime only
+
 def get_working_key():
-    global _API_KEY_CACHE
-    if _API_KEY_CACHE is None:
-        _API_KEY_CACHE = _os.environ.get('OPENROUTER_KEY', '')
-    return _API_KEY_CACHE
+    import os
+    return os.environ.get('OPENROUTER_KEY', '')
 
 # ========== WORM PERSONAS ==========
 WORM_PERSONAS = {
@@ -244,7 +242,7 @@ def vps_ls():
 def test_model():
     data = request.json
     model_id = data.get('model', DEFAULT_MODEL)
-    api_key = data.get('api_key', get_working_key())
+    api_key = data.get('api_key', '') or get_working_key()
     if not api_key:
         return jsonify({"status": "offline", "error": "No API key"})
     try:
