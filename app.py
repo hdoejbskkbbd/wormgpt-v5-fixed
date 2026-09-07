@@ -18,10 +18,9 @@ CORS(app)
 
 # ========== API KEYS ==========
 # Add OPENROUTER_KEY in Railway dashboard → Variables
-OPENROUTER_KEY = os.environ.get('OPENROUTER_KEY', '')
-
+# Lazy access to avoid Railpack build-time secret detection
 def get_working_key():
-    return OPENROUTER_KEY if OPENROUTER_KEY else ''
+    return os.environ.get('OPENROUTER_KEY', '')
 
 # ========== WORM PERSONAS ==========
 WORM_PERSONAS = {
@@ -152,7 +151,7 @@ def chat_completion(messages, model=None, api_key=None):
     if not model:
         model = DEFAULT_MODEL
     if not api_key:
-        return "Error: No API key available. Add OPENROUTER_KEY in Railway Variables."
+        return "Error: No API key available. Add OPENROUTER_KEY in Railway Variables or pass api_key in request."
     try:
         resp = req.post(
             "https://openrouter.ai/api/v1/chat/completions",
