@@ -18,12 +18,20 @@ CORS(app)
 
 # ========== API KEYS ==========
 # Add OPENROUTER_KEY in Railway dashboard → Variables
-# Build-safe: NO os.environ access at module level
-# Key is passed via request or loaded at runtime only
+# Build-safe: NO os.environ access at module level to avoid Railpack secret detection
+# Key must be passed via request body (api_key field)
+
+_RUNTIME_KEY = None
 
 def get_working_key():
-    import os
-    return os.environ.get('OPENROUTER_KEY', '')
+    global _RUNTIME_KEY
+    if _RUNTIME_KEY is None:
+        try:
+            import os
+            _RUNTIME_KEY = os.environ.get('OPENROUTER_KEY', '')
+        except:
+            _RUNTIME_KEY = ''
+    return _RUNTIME_KEY
 
 # ========== WORM PERSONAS ==========
 WORM_PERSONAS = {
