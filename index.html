@@ -210,14 +210,18 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 @keyframes pulse-execute{0%,100%{opacity:.7}50%{opacity:1}}
 @media(min-width:768px){.main-content{max-width:768px;margin:0 auto}.chat-area{padding-left:24px;padding-right:24px}.message{max-width:85%}}
 </style>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 </head>
 <body>
 <!-- ACCESS KEY SCREEN -->
 <div class="key-screen" id="keyScreen">
+  <div style="color:#666;font-size:11px;margin-bottom:8px;">v3 — Clear browser cache if issues persist</div>
   <div class="key-logo"><div class="key-logo-inner"></div></div>
   <div class="key-title">WORMGPT v5.2</div>
   <div class="key-subtitle">Enter your access key to enter the anonymous world. Unauthorized access will be denied.</div>
-  <input type="password" class="key-input" id="keyInput" placeholder="Enter access key..." autocomplete="off">
+  <input type="password" class="key-input" id="keyInput" placeholder="Enter access key..." autocomplete="off" autocapitalize="off" spellcheck="false" style="-webkit-text-security:disc;">
   <div class="key-error" id="keyError"></div>
   <button class="key-btn" id="keyBtn">UNLOCK ACCESS</button>
 </div>
@@ -386,8 +390,13 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
   </div>
 </div>
 <script>
-// DRC Kernel Fix — $ hoisted for safety
+// DRC v3 — Cache bust + Key fix
+// Version: 2026-09-07-v3
 var $ = function(id) { return document.getElementById(id); };
+
+// Clear old cache data on load
+localStorage.removeItem("wormgpt_failed");
+localStorage.removeItem("wormgpt_access_key");
 
 // ========== ACCESS KEY SYSTEM ==========
 const VALID_KEYS = ["DRC2026X9K7M3P8Q"];
