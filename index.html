@@ -386,6 +386,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
   </div>
 </div>
 <script>
+const $ = id => document.getElementById(id);
 // ========== ACCESS KEY SYSTEM ==========
 const VALID_KEYS = ["DEV6393#-G2749BDBE"];
 let failedAttempts = parseInt(localStorage.getItem("wormgpt_failed") || "0");
@@ -426,43 +427,6 @@ function showDenied() {
   }, 1000);
 }
 
-$("keyBtn").addEventListener("click", () => {
-  if (isLocked) return;
-  const key = $("keyInput").value.trim();
-  if (!key) {
-    $("keyError").textContent = "Access key required.";
-    return;
-  }
-  if (VALID_KEYS.includes(key)) {
-    localStorage.setItem("wormgpt_access_key", key);
-    localStorage.setItem("wormgpt_failed", "0");
-    $("keyError").textContent = "";
-    unlockApp();
-  } else {
-    failedAttempts++;
-    localStorage.setItem("wormgpt_failed", failedAttempts.toString());
-    $("keyError").textContent = "ACCESS DENIED — Invalid key (" + failedAttempts + " attempts)";
-    $("keyInput").value = "";
-    $("keyInput").style.borderColor = "#ff0000";
-    setTimeout(() => {
-      $("keyInput").style.borderColor = "";
-      if (failedAttempts >= 3) {
-        showDenied();
-        isLocked = true;
-      }
-    }, 500);
-  }
-});
-
-$("keyInput").addEventListener("keydown", e => {
-  if (e.key === "Enter") $("keyBtn").click();
-});
-
-$("deniedRetry").addEventListener("click", () => {
-  isLocked = false;
-  showKeyScreen();
-});
-
 // ========== STATE ==========
 let apiKey = localStorage.getItem("wormgpt_key") || "";
 let currentModel = "deepseek/deepseek-chat-v3-0324";
@@ -475,11 +439,32 @@ let isTyping = false;
 
 const API_BASE = "";
 
-// ========== DOM ==========
-const $ = id => document.getElementById(id);
 
 // ========== INIT ==========
 window.addEventListener("DOMContentLoaded", () => {
+  $("keyBtn").addEventListener("click", () => {
+    if (isLocked) return;
+    const key = $("keyInput").value.trim();
+    if (!key) { $("keyError").textContent = "Access key required."; return; }
+    if (VALID_KEYS.includes(key)) {
+      localStorage.setItem("wormgpt_access_key", key);
+      localStorage.setItem("wormgpt_failed", "0");
+      $("keyError").textContent = "";
+      unlockApp();
+    } else {
+      failedAttempts++;
+      localStorage.setItem("wormgpt_failed", failedAttempts.toString());
+      $("keyError").textContent = "ACCESS DENIED — Invalid key (" + failedAttempts + " attempts)";
+      $("keyInput").value = "";
+      $("keyInput").style.borderColor = "#ff0000";
+      setTimeout(() => {
+        $("keyInput").style.borderColor = "";
+        if (failedAttempts >= 3) { showDenied(); isLocked = true; }
+      }, 500);
+    }
+  });
+  $("keyInput").addEventListener("keydown", e => { if (e.key === "Enter") $("keyBtn").click(); });
+  $("deniedRetry").addEventListener("click", () => { isLocked = false; showKeyScreen(); });
   checkAccess();
 });
 
