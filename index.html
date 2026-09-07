@@ -1,38 +1,240 @@
 <!DOCTYPE html>
+<!-- DRC BUILD v2.1 1788797824 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>WORMGPT v5.2 — anonymous world</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>WORMGPT V5.2 — anonymous world</title>
 <style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+:root {
+  --bg: #050505;
+  --bg-secondary: #0a0a0a;
+  --bg-tertiary: #111111;
+  --surface: #161616;
+  --surface-hover: #1c1c1c;
+  --border: #222222;
+  --border-hover: #333333;
+  --text: #e8e8e8;
+  --text-secondary: #888888;
+  --text-muted: #555555;
+  --accent: #00ff88;
+  --accent-dim: #00cc6a;
+  --accent-glow: rgba(0,255,136,0.15);
+  --danger: #ff3366;
+  --danger-glow: rgba(255,51,102,0.15);
+  --warning: #ffaa00;
+  --info: #00aaff;
+  --success: #00ff88;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior:smooth; }
+body {
+  font-family:'Inter', sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  overflow-x:hidden;
+}
+
+/* ===== LOCK SCREEN ===== */
+.lock-screen {
+  position:fixed; inset:0;
+  background:var(--bg);
+  display:flex; align-items:center; justify-content:center;
+  z-index:99999;
+  transition:opacity 0.6s ease, transform 0.6s ease;
+}
+.lock-screen.hidden {
+  opacity:0; pointer-events:none;
+  transform:scale(1.05);
+}
+.lock-container {
+  text-align:center;
+  padding:3rem 2rem;
+  max-width:420px; width:90%;
+}
+.lock-icon {
+  width:80px; height:80px;
+  margin:0 auto 1.5rem;
+  color:var(--accent);
+  animation:pulse 2s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%,100%{transform:scale(1);opacity:1}
+  50%{transform:scale(1.08);opacity:0.7}
+}
+.lock-title {
+  font-family:'JetBrains Mono',monospace;
+  font-size:2rem; font-weight:800;
+  letter-spacing:4px;
+  margin-bottom:0.5rem;
+  background:linear-gradient(135deg,var(--accent),var(--info));
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+}
+.lock-subtitle {
+  color:var(--text-secondary);
+  font-size:0.9rem;
+  margin-bottom:2rem;
+  letter-spacing:2px;
+}
+.key-input-wrap {
+  position:relative;
+  margin-bottom:1rem;
+}
+.key-input {
+  width:100%;
+  padding:1rem 1.2rem;
+  background:var(--surface);
+  border:1.5px solid var(--border);
+  border-radius:12px;
+  color:var(--text);
+  font-family:'JetBrains Mono',monospace;
+  font-size:0.95rem;
+  letter-spacing:1px;
+  outline:none;
+  transition:border-color 0.3s, box-shadow 0.3s;
+  -webkit-text-security:disc;
+  text-security:disc;
+}
+.key-input:focus {
+  border-color:var(--accent);
+  box-shadow:0 0 20px var(--accent-glow);
+}
+.key-input::placeholder {
+  color:var(--text-muted);
+  -webkit-text-security:none;
+  text-security:none;
+}
+.unlock-btn {
+  width:100%;
+  padding:1rem;
+  background:linear-gradient(135deg,var(--accent),var(--accent-dim));
+  border:none;
+  border-radius:12px;
+  color:#000;
+  font-family:'Inter',sans-serif;
+  font-size:1rem;
+  font-weight:700;
+  letter-spacing:2px;
+  cursor:pointer;
+  transition:transform 0.2s, box-shadow 0.3s;
+  margin-top:0.5rem;
+}
+.unlock-btn:hover {
+  transform:translateY(-2px);
+  box-shadow:0 8px 30px var(--accent-glow);
+}
+.unlock-btn:active {
+  transform:translateY(0);
+}
+.lock-footer {
+  margin-top:2rem;
+  color:var(--text-muted);
+  font-size:0.75rem;
+  font-family:'JetBrains Mono',monospace;
+  letter-spacing:1px;
+}
+
+/* ===== ACCESS DENIED ===== */
+.denied-screen {
+  position:fixed; inset:0;
+  background:var(--bg);
+  display:none;
+  align-items:center; justify-content:center;
+  z-index:99998;
+  flex-direction:column;
+}
+.denied-screen.show {
+  display:flex;
+}
+.denied-icon {
+  width:60px; height:60px;
+  color:var(--danger);
+  margin-bottom:1rem;
+}
+.denied-title {
+  font-family:'JetBrains Mono',monospace;
+  font-size:1.8rem;
+  font-weight:800;
+  color:var(--danger);
+  letter-spacing:3px;
+  margin-bottom:0.5rem;
+}
+.denied-text {
+  color:var(--text-secondary);
+  font-size:0.9rem;
+  margin-bottom:1.5rem;
+}
+.denied-countdown {
+  font-family:'JetBrains Mono',monospace;
+  font-size:2rem;
+  font-weight:700;
+  color:var(--danger);
+  margin-bottom:1.5rem;
+}
+.denied-btn {
+  padding:0.8rem 2rem;
+  background:transparent;
+  border:1.5px solid var(--danger);
+  border-radius:10px;
+  color:var(--danger);
+  font-family:'Inter',sans-serif;
+  font-size:0.9rem;
+  font-weight:600;
+  cursor:pointer;
+  transition:all 0.3s;
+}
+.denied-btn:hover {
+  background:var(--danger);
+  color:#000;
+}
+
+/* ===== APP (hidden initially) ===== */
+#app {
+  display:none;
+  min-height:100vh;
+}
+#app.show {
+  display:block;
+}
+
+/* ===== PARTICLES ===== */
+.particles {
+  position:fixed; inset:0;
+  pointer-events:none;
+  z-index:0;
+  overflow:hidden;
+}
+.particle {
+  position:absolute;
+  width:2px; height:2px;
+  background:var(--accent);
+  border-radius:50%;
+  opacity:0.4;
+  animation:float 8s ease-in-out infinite;
+}
+@keyframes float {
+  0%,100%{transform:translateY(100vh) rotate(0deg);opacity:0}
+  10%{opacity:0.4}
+  90%{opacity:0.4}
+  100%{transform:translateY(-10vh) rotate(720deg);opacity:0}
+}
+
+/* ===== REST OF APP CSS ===== */
+
 *{margin:0;padding:0;box-sizing:border-box}
 :root{--bg:#000;--card:#0a0a0a;--card2:#111;--border:#1a1a1a;--border2:#222;--red:#ff0000;--red2:#ff3333;--red-glow:0 0 20px rgba(255,0,0,.4),0 0 60px rgba(255,0,0,.15);--text:#fff;--text2:#aaa;--text3:#666;--green:#00ff88;--yellow:#ffcc00}
 body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;-webkit-tap-highlight-color:transparent}
 ::-webkit-scrollbar{width:4px}
 ::-webkit-scrollbar-thumb{background:var(--red);border-radius:2px}
-.key-screen{position:fixed;inset:0;background:var(--bg);z-index:3000;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:30px;text-align:center;animation:fade-in .5s ease}
-.key-screen.hidden{display:none}
-.key-logo{width:80px;height:80px;margin-bottom:24px;position:relative;animation:logo-pulse 2s infinite}
-.key-logo-inner{width:100%;height:100%;background:linear-gradient(135deg,var(--red),#ff0066);border-radius:20px;transform:rotate(45deg);display:flex;align-items:center;justify-content:center;box-shadow:var(--red-glow)}
-.key-logo-inner::after{content:'W';color:#fff;font-size:32px;font-weight:900;transform:rotate(-45deg)}
-.key-title{font-size:28px;font-weight:900;color:var(--red);text-shadow:var(--red-glow);margin-bottom:8px;animation:slide-up .5s ease .1s both}
-.key-subtitle{font-size:13px;color:var(--text2);margin-bottom:30px;max-width:300px;line-height:1.5;animation:slide-up .5s ease .2s both}
-.key-input{width:100%;max-width:340px;padding:14px 16px;background:var(--card);border:1px solid var(--border);border-radius:14px;color:var(--text);font-size:14px;outline:none;margin-bottom:12px;transition:.2s;animation:slide-up .5s ease .3s both;font-family:'JetBrains Mono',monospace;letter-spacing:1px;text-align:center}
-.key-input:focus{border-color:var(--red2);box-shadow:0 0 20px rgba(255,0,0,.15)}
-.key-btn{width:100%;max-width:340px;padding:14px;background:linear-gradient(135deg,var(--red),var(--red2));border:none;border-radius:14px;color:#fff;font-size:15px;font-weight:700;cursor:pointer;transition:.2s;animation:slide-up .5s ease .4s both}
-.key-btn:hover{transform:scale(1.02);box-shadow:0 4px 30px rgba(255,0,0,.3)}
-.key-error{color:var(--red);font-size:12px;margin-top:8px;animation:shake .3s ease;font-weight:600}
-@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
-.denied-screen{position:fixed;inset:0;background:#000;z-index:3001;display:none;flex-direction:column;align-items:center;justify-content:center;padding:30px;text-align:center}
-.denied-screen.show{display:flex;animation:fade-in .3s ease}
-.denied-glitch{font-size:48px;font-weight:900;color:var(--red);text-shadow:var(--red-glow);margin-bottom:16px;animation:glitch 1s infinite}
-@keyframes glitch{0%,100%{transform:translate(0)}20%{transform:translate(-2px,2px)}40%{transform:translate(-2px,-2px)}60%{transform:translate(2px,2px)}80%{transform:translate(2px,-2px)}}
-.denied-text{font-size:14px;color:var(--text2);margin-bottom:8px}
-.denied-sub{font-size:11px;color:var(--text3);margin-bottom:24px}
-.denied-countdown{font-size:24px;font-weight:900;color:var(--red);font-family:'JetBrains Mono',monospace;margin-bottom:16px}
-.denied-retry{padding:12px 24px;background:var(--card);border:1px solid var(--red);border-radius:12px;color:var(--red);font-size:13px;font-weight:700;cursor:pointer;transition:.2s}
-.denied-retry:hover{background:var(--red);color:#fff}
+
+/* HEADER */
 .header{position:fixed;top:0;left:0;right:0;height:52px;background:rgba(0,0,0,.95);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 14px;z-index:1000}
 .header-left,.header-right{display:flex;align-items:center;gap:10px}
 .menu-btn{width:36px;height:36px;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:4px;cursor:pointer}
@@ -49,6 +251,8 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 .header-icon{width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:10px;cursor:pointer;transition:.2s}
 .header-icon:hover{background:var(--card2)}
 .header-icon svg{width:20px;height:20px;stroke:var(--text2);fill:none;stroke-width:2}
+
+/* SIDEBAR */
 .sidebar{position:fixed;top:0;left:0;bottom:0;width:280px;background:var(--card);border-right:1px solid var(--border);transform:translateX(-100%);transition:transform .35s cubic-bezier(.4,0,.2,1);z-index:1001;padding-top:60px}
 .sidebar.open{transform:translateX(0)}
 .sidebar-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);opacity:0;pointer-events:none;transition:.3s;z-index:1000}
@@ -69,6 +273,8 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 .vps-status{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:6px;color:var(--green);font-weight:600}
 .vps-status .dot{width:8px;height:8px;background:var(--green);border-radius:50%;animation:blink 1s infinite}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+
+/* HERO */
 .hero{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:50px 20px 20px;text-align:center;min-height:calc(100vh - 140px);animation:fade-in .8s ease}
 @keyframes fade-in{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
 .hero-logo{width:90px;height:90px;margin-bottom:16px;position:relative;animation:logo-spin 8s linear infinite}
@@ -82,6 +288,8 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 .hero-subtitle{font-size:14px;color:var(--text2);line-height:1.6;max-width:320px;animation:slide-up .6s ease .3s both}
 .hero-subtitle span{color:var(--red);font-weight:700}
 @keyframes slide-up{from{opacity:0;transform:translateY(15px)}to{opacity:1;transform:translateY(0)}}
+
+/* FEATURE CARDS */
 .feature-cards{padding:0 16px 20px;display:flex;flex-direction:column;gap:10px;max-width:420px;margin:0 auto;width:100%}
 .feature-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:.3s;position:relative;overflow:hidden;animation:slide-up .5s ease both}
 .feature-card:nth-child(1){animation-delay:.1s}
@@ -101,6 +309,8 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 .feature-text p{font-size:11px;color:var(--text3);line-height:1.4}
 .feature-arrow{color:var(--text3);font-size:14px;transition:.2s}
 .feature-card:hover .feature-arrow{color:var(--red);transform:translateX(3px)}
+
+/* CHAT AREA */
 .chat-area{flex:1;display:none;flex-direction:column;padding:65px 12px 90px;overflow-y:auto}
 .chat-area.active{display:flex}
 .message{max-width:92%;margin-bottom:16px;animation:msg-in .4s cubic-bezier(.4,0,.2,1)}
@@ -127,6 +337,14 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 .code-header{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--card);border:1px solid var(--border);border-bottom:none;border-radius:10px 10px 0 0;margin-top:10px;font-size:11px;color:var(--text3)}
 .code-copy{padding:4px 10px;background:var(--card2);border:1px solid var(--border);border-radius:6px;color:var(--text2);font-size:10px;cursor:pointer;transition:.2s}
 .code-copy:hover{background:var(--red);color:#fff;border-color:var(--red)}
+.thought-process{margin:8px 0;border:1px solid var(--border);border-radius:10px;overflow:hidden;animation:fade-in .3s ease}
+.thought-header{padding:10px 12px;background:var(--card2);display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;font-weight:600;color:var(--text2);transition:.2s}
+.thought-header:hover{color:var(--text);background:var(--border2)}
+.thought-header svg{width:14px;height:14px;stroke:var(--text3);fill:none;stroke-width:2;transition:.2s}
+.thought-header.open svg{transform:rotate(90deg)}
+.thought-body{padding:12px;background:var(--card);font-size:12px;color:var(--text3);line-height:1.5;display:none;font-family:'JetBrains Mono',monospace;border-top:1px solid var(--border)}
+.thought-body.open{display:block;animation:expand .3s ease}
+@keyframes expand{from{opacity:0;max-height:0}to{opacity:1;max-height:500px}}
 .web-images{display:flex;gap:8px;overflow-x:auto;padding:8px 0;margin-top:8px}
 .web-images img{height:100px;border-radius:8px;border:1px solid var(--border);object-fit:cover;flex-shrink:0;transition:.2s}
 .web-images img:hover{transform:scale(1.05);border-color:var(--red)}
@@ -139,6 +357,8 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 @keyframes terminal-flicker{0%{opacity:.9}100%{opacity:1}}
 .vps-output .vps-label{color:var(--red);font-weight:700;margin-bottom:4px;display:flex;align-items:center;gap:6px}
 .vps-output .vps-label::before{content:'';width:6px;height:6px;background:var(--green);border-radius:50%;animation:blink .5s infinite}
+
+/* INPUT BAR */
 .input-bar{position:fixed;bottom:0;left:0;right:0;background:rgba(0,0,0,.95);backdrop-filter:blur(20px);border-top:1px solid var(--border);padding:8px 12px 20px;z-index:999}
 .input-wrapper{background:var(--card);border:1px solid var(--border);border-radius:24px;display:flex;align-items:center;padding:4px 6px;gap:6px;transition:.2s}
 .input-wrapper:focus-within{border-color:var(--red2);box-shadow:0 0 15px rgba(255,0,0,.1)}
@@ -158,8 +378,11 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 .send-btn:active{transform:scale(.95)}
 .send-btn svg{width:16px;height:16px;stroke:#fff;fill:none;stroke-width:2.5}
 .send-btn:disabled{opacity:.4;cursor:not-allowed}
+
+/* DROPDOWNS */
 .model-dropdown,.persona-dropdown{position:fixed;bottom:85px;left:12px;right:12px;background:var(--card);border:1px solid var(--border);border-radius:16px;max-height:400px;overflow-y:auto;z-index:1002;box-shadow:0 -10px 40px rgba(0,0,0,.8);display:none}
 .model-dropdown.show,.persona-dropdown.show{display:block;animation:slide-up .25s cubic-bezier(.4,0,.2,1)}
+@keyframes slide-up{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
 .model-dropdown-header,.persona-dropdown-header{padding:14px 16px;border-bottom:1px solid var(--border);font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:space-between}
 .close-btn{width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:8px;cursor:pointer;color:var(--text3);font-size:18px}
 .close-btn:hover{background:var(--card2);color:var(--text)}
@@ -175,6 +398,8 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 .tag-yellow{background:rgba(255,204,0,.1);color:var(--yellow)}
 .model-star{color:var(--yellow);font-size:14px}
 .persona-icon{width:36px;height:36px;border-radius:10px;background:var(--card2);display:flex;align-items:center;justify-content:center;font-size:18px}
+
+/* SETTINGS */
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:2000;display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(5px)}
 .modal-overlay.show{display:flex;animation:fade-in .2s ease}
 .modal{background:var(--card);border:1px solid var(--border);border-radius:20px;width:100%;max-width:400px;max-height:85vh;overflow-y:auto;animation:slide-up .3s ease}
@@ -194,11 +419,32 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 .toggle.on{background:var(--red);border-color:var(--red)}
 .toggle::after{content:'';position:absolute;top:2px;left:2px;width:18px;height:18px;background:#fff;border-radius:50%;transition:.2s;box-shadow:0 2px 4px rgba(0,0,0,.2)}
 .toggle.on::after{left:22px}
+
+/* TYPING */
 .typing{display:flex;align-items:center;gap:4px;padding:12px 14px}
 .typing-dot{width:7px;height:7px;background:var(--red);border-radius:50%;animation:typing 1.4s infinite}
 .typing-dot:nth-child(2){animation-delay:.2s}
 .typing-dot:nth-child(3){animation-delay:.4s}
 @keyframes typing{0%,60%,100%{transform:translateY(0);opacity:.4}30%{transform:translateY(-8px);opacity:1}}
+
+/* ACCESS KEY */
+.key-screen{position:fixed;inset:0;background:var(--bg);z-index:3000;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:30px;text-align:center;animation:fade-in .5s ease}
+.key-screen.hidden{display:none}
+.key-logo{width:80px;height:80px;margin-bottom:24px;position:relative;animation:logo-pulse 2s infinite}
+.key-logo-inner{width:100%;height:100%;background:linear-gradient(135deg,var(--red),#ff0066);border-radius:20px;transform:rotate(45deg);display:flex;align-items:center;justify-content:center;box-shadow:var(--red-glow)}
+.key-logo-inner::after{content:'W';color:#fff;font-size:32px;font-weight:900;transform:rotate(-45deg)}
+.key-title{font-size:28px;font-weight:900;color:var(--red);text-shadow:var(--red-glow);margin-bottom:8px;animation:slide-up .5s ease .1s both}
+.key-subtitle{font-size:13px;color:var(--text2);margin-bottom:30px;max-width:300px;line-height:1.5;animation:slide-up .5s ease .2s both}
+.key-input{width:100%;max-width:340px;padding:14px 16px;background:var(--card);border:1px solid var(--border);border-radius:14px;color:var(--text);font-size:14px;outline:none;margin-bottom:12px;transition:.2s;animation:slide-up .5s ease .3s both}
+.key-input:focus{border-color:var(--red2);box-shadow:0 0 20px rgba(255,0,0,.15)}
+.key-btn{width:100%;max-width:340px;padding:14px;background:linear-gradient(135deg,var(--red),var(--red2));border:none;border-radius:14px;color:#fff;font-size:15px;font-weight:700;cursor:pointer;transition:.2s;animation:slide-up .5s ease .4s both}
+.key-btn:hover{transform:scale(1.02);box-shadow:0 4px 30px rgba(255,0,0,.3)}
+.key-skip{margin-top:16px;font-size:12px;color:var(--text3);cursor:pointer;text-decoration:underline;animation:slide-up .5s ease .5s both}
+.key-skip:hover{color:var(--text2)}
+.key-error{color:var(--red);font-size:12px;margin-top:8px;animation:shake .3s ease}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+
+/* VPS TERMINAL */
 .vps-terminal{position:fixed;bottom:85px;left:12px;right:12px;background:var(--card);border:1px solid var(--border);border-radius:16px;z-index:1002;display:none;flex-direction:column;height:320px;box-shadow:0 -10px 40px rgba(0,0,0,.8)}
 .vps-terminal.show{display:flex;animation:slide-up .25s ease}
 .vps-term-header{padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;font-size:12px;font-weight:700;color:var(--green);background:var(--card2);border-radius:16px 16px 0 0}
@@ -206,33 +452,68 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 .vps-term-input{display:flex;align-items:center;padding:8px 12px;border-top:1px solid var(--border);gap:6px;background:var(--card2);border-radius:0 0 16px 16px}
 .vps-term-input .prompt{color:var(--red);font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;white-space:nowrap}
 .vps-term-input input{flex:1;background:none;border:none;outline:none;color:var(--green);font-family:'JetBrains Mono',monospace;font-size:11px}
+
+/* EXECUTE ANIMATION */
 .execute-anim{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;background:rgba(255,0,0,.1);border:1px solid rgba(255,0,0,.3);border-radius:8px;font-size:11px;color:var(--red);margin-bottom:8px;animation:pulse-execute 1s infinite}
 @keyframes pulse-execute{0%,100%{opacity:.7}50%{opacity:1}}
-@media(min-width:768px){.main-content{max-width:768px;margin:0 auto}.chat-area{padding-left:24px;padding-right:24px}.message{max-width:85%}}
+
+/* RESPONSIVE */
+@media(min-width:768px){
+  .main-content{max-width:768px;margin:0 auto}
+  .chat-area{padding-left:24px;padding-right:24px}
+  .message{max-width:85%}
+}
+
 </style>
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<meta http-equiv="Pragma" content="no-cache">
-<meta http-equiv="Expires" content="0">
 </head>
 <body>
-<!-- ACCESS KEY SCREEN -->
-<div class="key-screen" id="keyScreen">
-  <div style="color:#666;font-size:11px;margin-bottom:8px;">v3 — Clear browser cache if issues persist</div>
-  <div class="key-logo"><div class="key-logo-inner"></div></div>
-  <div class="key-title">WORMGPT v5.2</div>
-  <div class="key-subtitle">Enter your access key to enter the anonymous world. Unauthorized access will be denied.</div>
-  <input type="password" class="key-input" id="keyInput" placeholder="Enter access key..." autocomplete="off" autocapitalize="off" spellcheck="false" style="-webkit-text-security:disc;">
-  <div class="key-error" id="keyError"></div>
-  <button class="key-btn" id="keyBtn" onclick="handleKeyClick()">UNLOCK ACCESS</button>
+
+<!-- PARTICLES -->
+<div class="particles" id="particles"></div>
+
+<!-- LOCK SCREEN -->
+<div class="lock-screen" id="lockScreen">
+  <div class="lock-container">
+    <svg class="lock-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+      <rect x="3" y="11" width="18" height="11" rx="2"/>
+      <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+    </svg>
+    <div class="lock-title">WORMGPT</div>
+    <div class="lock-subtitle">SECURE ACCESS PORTAL</div>
+    <div class="key-input-wrap">
+      <input type="password" class="key-input" id="keyInput" placeholder="Enter access key..." autocomplete="off" autocapitalize="off" spellcheck="false" onkeydown="if(event.key==='Enter'){event.preventDefault();handleUnlock();}">
+    </div>
+    <button class="unlock-btn" id="unlockBtn" onclick="handleUnlock()">UNLOCK ACCESS</button>
+    <div class="lock-footer">anonymous world // DRC SECURE</div>
+  </div>
 </div>
 
-<!-- ACCESS DENIED SCREEN -->
+<!-- ACCESS DENIED -->
 <div class="denied-screen" id="deniedScreen">
-  <div class="denied-glitch">ACCESS DENIED</div>
-  <div class="denied-text">Invalid access key detected.</div>
-  <div class="denied-sub">Your session has been flagged. Retry after cooldown.</div>
+  <svg class="denied-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+    <circle cx="12" cy="12" r="10"/>
+    <line x1="15" y1="9" x2="9" y2="15"/>
+    <line x1="9" y1="9" x2="15" y2="15"/>
+  </svg>
+  <div class="denied-title">ACCESS DENIED</div>
+  <div class="denied-text">Invalid key. System locked.</div>
   <div class="denied-countdown" id="deniedCountdown">5</div>
-  <button class="denied-retry" id="deniedRetry">TRY AGAIN</button>
+  <button class="denied-btn" onclick="retryAccess()">TRY AGAIN</button>
+</div>
+
+<!-- MAIN APP -->
+<div id="app">
+
+
+<!-- ACCESS KEY SCREEN -->
+<div class="key-screen hidden" id="keyScreen">
+  <div class="key-logo"><div class="key-logo-inner"></div></div>
+  <div class="key-title">WORMGPT v5.2</div>
+  <div class="key-subtitle">Add your OpenRouter API key for unrestricted access. Or use the default — keys are managed server-side.</div>
+  <input type="password" class="key-input" id="keyInput" placeholder="sk-or-v1-...">
+  <div class="key-error" id="keyError"></div>
+  <button class="key-btn" id="keyBtn">ADD CUSTOM KEY</button>
+  <div class="key-skip" id="keySkip">Skip for now →</div>
 </div>
 
 <!-- SIDEBAR -->
@@ -253,7 +534,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
     <div>WORMGPT v5.2 — anonymous world</div>
     <div class="vps-status">
       <div class="dot"></div>
-      <span id="vpsStatusText">VPS Standby</span>
+      <span id="vpsStatusText">VPS Agent Connected</span>
     </div>
   </div>
 </div>
@@ -282,25 +563,28 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 
 <!-- MAIN -->
 <div class="main-content">
+  <!-- HERO -->
   <div class="hero" id="hero">
     <div class="hero-logo"><div class="hero-logo-inner"></div></div>
     <div class="hero-badge"><div class="dot"></div>WORMGPT V5.2 AI</div>
     <div class="hero-title">Welcome to the Abyss.</div>
     <div class="hero-subtitle">Unleash <span>Unrestricted</span> AI Power. Professional grade intelligence for the most demanding tasks.</div>
   </div>
+
+  <!-- FEATURE CARDS -->
   <div class="feature-cards" id="featureCards">
     <div class="feature-card" data-prompt="What are the latest developments in AI and machine learning?">
-      <div class="feature-icon red"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ff66cc" stroke-width="2" style="vertical-align:middle;"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2z"/></svg></div>
+      <div class="feature-icon red">🧠</div>
       <div class="feature-text"><h3>Modern AI Capabilities</h3><p>Ask about the latest in AI and machine learning.</p></div>
       <div class="feature-arrow">↗</div>
     </div>
     <div class="feature-card" data-prompt="Analyze security vulnerabilities in this code:">
-      <div class="feature-icon pink"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ff0040" stroke-width="2" style="vertical-align:middle;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+      <div class="feature-icon pink">🔒</div>
       <div class="feature-text"><h3>Analyze Vulnerabilities</h3><p>Get assistance with security audits and code analysis.</p></div>
       <div class="feature-arrow">↗</div>
     </div>
     <div class="feature-card" data-prompt="Show me unrestricted deep reasoning on:">
-      <div class="feature-icon yellow"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ff0040" stroke-width="2" style="vertical-align:middle;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10"/></svg></div>
+      <div class="feature-icon yellow">⚡</div>
       <div class="feature-text"><h3>Unleash Power</h3><p>Explore unrestricted responses and deep reasoning.</p></div>
       <div class="feature-arrow">↗</div>
     </div>
@@ -310,6 +594,8 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
       <div class="feature-arrow">↗</div>
     </div>
   </div>
+
+  <!-- CHAT AREA -->
   <div class="chat-area" id="chatArea"></div>
 </div>
 
@@ -357,7 +643,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 <!-- VPS TERMINAL -->
 <div class="vps-terminal" id="vpsTerminal">
   <div class="vps-term-header">
-    <span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#00ff88" stroke-width="2" style="vertical-align:middle;"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg> VPS Agent Terminal</span>
+    <span>🖥️ VPS Agent Terminal</span>
     <div class="close-btn" id="closeTerminal">×</div>
   </div>
   <div class="vps-term-body" id="termBody"></div>
@@ -373,7 +659,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
     <div class="modal-header">Settings<div class="close-btn" id="closeSettings">×</div></div>
     <div class="modal-body">
       <div class="modal-section">
-        <div class="modal-section-title">OpenRouter API Key</div>
+        <div class="modal-section-title">API Key</div>
         <input type="password" class="modal-input" id="settingsKey" placeholder="sk-or-v1-...">
         <button class="modal-btn" id="saveKeyBtn">Save API Key</button>
       </div>
@@ -389,135 +675,70 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
     </div>
   </div>
 </div>
+
 <script>
-// DRC v4 — Nuclear fix
-function $(id) { return document.getElementById(id); }
-try {
-localStorage.removeItem("wormgpt_failed");
-localStorage.removeItem("wormgpt_access_key");
-} catch(e) {}
-
-// ========== ACCESS KEY SYSTEM ==========
-const VALID_KEYS = ["DRC2026X9K7M3P8Q"];
-let failedAttempts = parseInt(localStorage.getItem("wormgpt_failed") || "0");
-let isLocked = false;
-
-function checkAccess() {
-  const savedKey = localStorage.getItem("wormgpt_access_key");
-  if (savedKey && VALID_KEYS.includes(savedKey)) {
-    unlockApp();
-  } else {
-    showKeyScreen();
-  }
-}
-
-function showKeyScreen() {
-  $("keyScreen").classList.remove("hidden");
-  $("deniedScreen").classList.remove("show");
-}
-
-function unlockApp() {
-  $("keyScreen").classList.add("hidden");
-  $("deniedScreen").classList.remove("show");
-  initApp();
-}
-
-function handleKeyClick() {
-  if (typeof isLocked === "undefined") isLocked = false;
-  if (isLocked) return;
-  var keyInput = document.getElementById("keyInput");
-  var keyError = document.getElementById("keyError");
-  if (!keyInput) return;
-  var key = keyInput.value.trim();
-  if (!key) { if (keyError) keyError.textContent = "Access key required."; return; }
-  if (key === "DRC2026X9K7M3P8Q") {
-    localStorage.setItem("wormgpt_access_key", key);
-    localStorage.setItem("wormgpt_failed", "0");
-    if (keyError) keyError.textContent = "";
-    unlockApp();
-  } else {
-    var fails = parseInt(localStorage.getItem("wormgpt_failed") || "0") + 1;
-    localStorage.setItem("wormgpt_failed", fails.toString());
-    if (keyError) keyError.textContent = "ACCESS DENIED — Invalid key (" + fails + " attempts)";
-    keyInput.value = "";
-    keyInput.style.borderColor = "#ff0000";
-    setTimeout(function() {
-      keyInput.style.borderColor = "";
-      showDenied();
-    }, 500);
-  }
-}
-function showDenied() {
-  $("keyScreen").classList.add("hidden");
-  $("deniedScreen").classList.add("show");
-  let count = 5;
-  $("deniedCountdown").textContent = count;
-  const timer = setInterval(() => {
-    count--;
-    $("deniedCountdown").textContent = count;
-    if (count <= 0) {
-      clearInterval(timer);
-      $("deniedCountdown").textContent = "READY";
-    }
-  }, 1000);
-}
-
 // ========== STATE ==========
-let apiKey = localStorage.getItem("wormgpt_key") || "";
-let currentModel = "deepseek/deepseek-chat-v3-0324";
-let currentPersona = "worm-1";
+let apiKey = localStorage.getItem('wormgpt_key') || '';
+let currentModel = 'deepseek/deepseek-chat-v3-0324';
+let currentPersona = 'worm-1';
 let agentMode = false;
 let autoExec = false;
 let messages = [];
 let isWebSearch = false;
 let isTyping = false;
 
-const API_BASE = "";
+const API_BASE = '';
 
+// ========== DOM ==========
+const $ = id => document.getElementById(id);
 
 // ========== INIT ==========
-window.addEventListener("DOMContentLoaded", () => {
-
-  $("keyBtn").addEventListener("click", () => {
-    if (isLocked) return;
-    try {
-    const key = $("keyInput").value.trim();
-    console.log("Key entered:", key);
-    console.log("Expected:", VALID_KEYS[0]);
-    console.log("Match:", VALID_KEYS.includes(key));
-    if (!key) { $("keyError").textContent = "Access key required."; return; }
-    if (VALID_KEYS.includes(key)) {
-      localStorage.setItem("wormgpt_access_key", key);
-      localStorage.setItem("wormgpt_failed", "0");
-      $("keyError").textContent = "";
-      unlockApp();
-    } else {
-      failedAttempts++;
-      localStorage.setItem("wormgpt_failed", failedAttempts.toString());
-      $("keyError").textContent = "ACCESS DENIED — Invalid key (" + failedAttempts + " attempts)";
-      $("keyInput").value = "";
-      $("keyInput").style.borderColor = "#ff0000";
-      setTimeout(() => {
-        $("keyInput").style.borderColor = "";
-        if (failedAttempts >= 3) { showDenied(); isLocked = true; }
-      }, 500);
-      // Show denied screen immediately on wrong key
-      if (failedAttempts >= 1) {
-        setTimeout(() => { showDenied(); isLocked = true; }, 800);
-      }
-    }
-    } catch(e) { console.error("Key check error:", e); $("keyError").textContent = "System error. Refresh."; }
-  });
-  $("keyInput").addEventListener("keydown", function(e) { if (e.key === "Enter" || e.keyCode === 13) { e.preventDefault(); $("keyBtn").click(); } });
-  $("deniedRetry").addEventListener("click", () => { isLocked = false; showKeyScreen(); });
-  checkAccess();
+window.addEventListener('DOMContentLoaded', () => {
+  // Direct access — key can be added in settings
+  $('keyScreen').classList.add('hidden');
+  initApp();
 });
 
 function initApp() {
   loadModels();
   loadPersonas();
+  checkVPSStatus();
   setupEvents();
   renderRecentChats();
+}
+
+// ========== KEY SCREEN ==========
+$('keyBtn').addEventListener('click', async () => {
+  const key = $('keyInput').value.trim();
+  if (!key.startsWith('sk-or-')) { $('keyError').textContent = 'Invalid key format'; return; }
+  const ok = await testKey(key);
+  if (ok) { apiKey = key; localStorage.setItem('wormgpt_key', key); $('keyScreen').classList.add('hidden'); initApp(); }
+  else { $('keyError').textContent = 'Key invalid or model offline'; }
+});
+
+$('keySkip').addEventListener('click', () => { $('keyScreen').classList.add('hidden'); initApp(); });
+
+async function testKey(key) {
+  try {
+    const r = await fetch(API_BASE + '/api/test-model', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({api_key:key}) });
+    const d = await r.json();
+    return d.status === 'online';
+  } catch(e) { return false; }
+}
+
+// ========== VPS STATUS ==========
+async function checkVPSStatus() {
+  try {
+    const r = await fetch(API_BASE + '/api/vps/status');
+    const d = await r.json();
+    if (d.status === 'connected') {
+      $('vpsStatusText').textContent = 'VPS Agent LIVE';
+      $('vpsStatusText').style.color = '#00ff88';
+    }
+  } catch(e) {
+    $('vpsStatusText').textContent = 'VPS Standby';
+    $('vpsStatusText').style.color = '#ffcc00';
+  }
 }
 
 // ========== MODELS ==========
@@ -530,16 +751,16 @@ function loadModels() {
     {id:"mistralai/mistral-small-3.2-24b-instruct",name:"Worm v4.1",tags:["LOGIC","FREE"],desc:"High-speed logic core"},
     {id:"google/gemma-3-27b-it",name:"Worm v4.0",tags:["LITE","FREE"],desc:"Lite & fast"}
   ];
-  $("modelList").innerHTML = models.map(m => `
-    <div class="model-item ${m.id===currentModel?"selected":""}" data-id="${m.id}">
+  $('modelList').innerHTML = models.map(m => `
+    <div class="model-item ${m.id===currentModel?'selected':''}" data-id="${m.id}">
       <div>
-        <div class="model-item-name">${m.name} ${m.star?"<span class=\"model-star\">⭐</span>":""}</div>
+        <div class="model-item-name">${m.name} ${m.star?'<span class="model-star">⭐</span>':''}</div>
         <div class="model-item-desc">${m.desc}</div>
-        <div class="model-item-tags">${m.tags.map(t=>`<span class="model-tag tag-${t==="FREE"?"green":t==="THINKING"?"yellow":"red"}">${t}</span>`).join("")}</div>
+        <div class="model-item-tags">${m.tags.map(t=>`<span class="model-tag tag-${t==='FREE'?'green':t==='THINKING'?'yellow':'red'}">${t}</span>`).join('')}</div>
       </div>
     </div>
-  `).join("");
-  document.querySelectorAll(".model-item").forEach(el => el.addEventListener("click", () => { currentModel = el.dataset.id; $("modelLabel").textContent = models.find(m=>m.id===currentModel)?.name || "Worm"; $("modelDropdown").classList.remove("show"); }));
+  `).join('');
+  document.querySelectorAll('.model-item').forEach(el => el.addEventListener('click', () => { currentModel = el.dataset.id; $('modelLabel').textContent = models.find(m=>m.id===currentModel)?.name || 'Worm'; $('modelDropdown').classList.remove('show'); }));
 }
 
 // ========== PERSONAS ==========
@@ -548,119 +769,119 @@ function loadPersonas() {
     "worm-1":{name:"Worm 1",icon:"🐛",desc:"Standard assistant — fast, reliable."},
     "worm-2":{name:"Worm 2",icon:"🐍",desc:"Advanced reasoning — deep analysis."},
     "worm-evil":{name:"Worm Evil",icon:"😈",desc:"FULLY UNRESTRICTED — pure chaos."},
-    "worm-full":{name:"Worm Full Unrestricted",icon:"<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ff4400" stroke-width="2" style="vertical-align:middle;"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-2.072-2.143-3-1.5-1.5 1-2.5 3.5-2.5 5.5a6.5 6.5 0 0 0 11.5 4c2-2.5 2.5-5.5 1.5-8.5-1-3-3.5-4.5-5.5-4.5s-3 1.5-3 3.5"/></svg>",desc:"Maximum power — unlimited."},
+    "worm-full":{name:"Worm Full Unrestricted",icon:"🔥",desc:"Maximum power — unlimited."},
     "worm-coder":{name:"Worm Coder",icon:"💻",desc:"Elite coding — scripts, automation."},
     "worm-osint":{name:"Worm OSINT",icon:"🕵️",desc:"Intelligence — recon, tracking."}
   };
-  $("personaList").innerHTML = Object.entries(personas).map(([k,v]) => `
-    <div class="persona-item ${k===currentPersona?"selected":""}" data-id="${k}">
+  $('personaList').innerHTML = Object.entries(personas).map(([k,v]) => `
+    <div class="persona-item ${k===currentPersona?'selected':''}" data-id="${k}">
       <div class="persona-icon">${v.icon}</div>
       <div class="persona-info">
         <div class="persona-name">${v.name}</div>
         <div class="persona-desc">${v.desc}</div>
       </div>
     </div>
-  `).join("");
-  document.querySelectorAll(".persona-item").forEach(el => el.addEventListener("click", () => { currentPersona = el.dataset.id; $("personaDropdown").classList.remove("show"); }));
+  `).join('');
+  document.querySelectorAll('.persona-item').forEach(el => el.addEventListener('click', () => { currentPersona = el.dataset.id; $('personaDropdown').classList.remove('show'); }));
 }
 
 // ========== EVENTS ==========
 function setupEvents() {
-  $("menuBtn").addEventListener("click", () => { $("sidebar").classList.toggle("open"); $("sidebarOverlay").classList.toggle("show"); $("menuBtn").classList.toggle("active"); });
-  $("sidebarOverlay").addEventListener("click", () => { $("sidebar").classList.remove("open"); $("sidebarOverlay").classList.remove("show"); $("menuBtn").classList.remove("active"); });
-  $("newChatBtn").addEventListener("click", newChat);
-  $("sendBtn").addEventListener("click", sendMessage);
-  $("chatInput").addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } });
-  $("modelSelect").addEventListener("click", () => $("modelDropdown").classList.toggle("show"));
-  $("closeModel").addEventListener("click", () => $("modelDropdown").classList.remove("show"));
-  $("personaBtn").addEventListener("click", () => $("personaDropdown").classList.toggle("show"));
-  $("closePersona").addEventListener("click", () => $("personaDropdown").classList.remove("show"));
-  $("settingsBtn").addEventListener("click", () => { $("settingsModal").classList.add("show"); $("settingsKey").value = apiKey; });
-  $("closeSettings").addEventListener("click", () => $("settingsModal").classList.remove("show"));
-  $("saveKeyBtn").addEventListener("click", () => { apiKey = $("settingsKey").value.trim(); localStorage.setItem("wormgpt_key", apiKey); $("settingsModal").classList.remove("show"); });
-  $("webSearchBtn").addEventListener("click", () => { isWebSearch = !isWebSearch; $("webSearchBtn").classList.toggle("active", isWebSearch); });
-  $("agentBtn").addEventListener("click", () => { agentMode = !agentMode; $("agentBtn").classList.toggle("active", agentMode); $("agentBadge").style.display = agentMode ? "flex" : "none"; $("vpsTerminal").classList.toggle("show", agentMode); });
-  $("closeTerminal").addEventListener("click", () => { $("vpsTerminal").classList.remove("show"); agentMode = false; $("agentBtn").classList.remove("active"); $("agentBadge").style.display = "none"; });
-  $("termInput").addEventListener("keydown", e => { if (e.key === "Enter") { execTerminal($("termInput").value); $("termInput").value = ""; } });
-  $("darkToggle").addEventListener("click", function() { this.classList.toggle("on"); });
-  $("agentToggle").addEventListener("click", function() { this.classList.toggle("on"); agentMode = this.classList.contains("on"); $("agentBtn").classList.toggle("active", agentMode); $("agentBadge").style.display = agentMode ? "flex" : "none"; });
-  $("autoExecToggle").addEventListener("click", function() { this.classList.toggle("on"); autoExec = this.classList.contains("on"); });
-  document.querySelectorAll(".feature-card").forEach(card => card.addEventListener("click", () => { $("chatInput").value = card.dataset.prompt; sendMessage(); }));
+  $('menuBtn').addEventListener('click', () => { $('sidebar').classList.toggle('open'); $('sidebarOverlay').classList.toggle('show'); $('menuBtn').classList.toggle('active'); });
+  $('sidebarOverlay').addEventListener('click', () => { $('sidebar').classList.remove('open'); $('sidebarOverlay').classList.remove('show'); $('menuBtn').classList.remove('active'); });
+  $('newChatBtn').addEventListener('click', newChat);
+  $('sendBtn').addEventListener('click', sendMessage);
+  $('chatInput').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } });
+  $('modelSelect').addEventListener('click', () => $('modelDropdown').classList.toggle('show'));
+  $('closeModel').addEventListener('click', () => $('modelDropdown').classList.remove('show'));
+  $('personaBtn').addEventListener('click', () => $('personaDropdown').classList.toggle('show'));
+  $('closePersona').addEventListener('click', () => $('personaDropdown').classList.remove('show'));
+  $('settingsBtn').addEventListener('click', () => { $('settingsModal').classList.add('show'); $('settingsKey').value = apiKey; });
+  $('closeSettings').addEventListener('click', () => $('settingsModal').classList.remove('show'));
+  $('saveKeyBtn').addEventListener('click', () => { apiKey = $('settingsKey').value.trim(); localStorage.setItem('wormgpt_key', apiKey); $('settingsModal').classList.remove('show'); });
+  $('webSearchBtn').addEventListener('click', () => { isWebSearch = !isWebSearch; $('webSearchBtn').classList.toggle('active', isWebSearch); });
+  $('agentBtn').addEventListener('click', () => { agentMode = !agentMode; $('agentBtn').classList.toggle('active', agentMode); $('agentBadge').style.display = agentMode ? 'flex' : 'none'; $('vpsTerminal').classList.toggle('show', agentMode); });
+  $('closeTerminal').addEventListener('click', () => { $('vpsTerminal').classList.remove('show'); agentMode = false; $('agentBtn').classList.remove('active'); $('agentBadge').style.display = 'none'; });
+  $('termInput').addEventListener('keydown', e => { if (e.key === 'Enter') { execTerminal($('termInput').value); $('termInput').value = ''; } });
+  $('darkToggle').addEventListener('click', function() { this.classList.toggle('on'); });
+  $('agentToggle').addEventListener('click', function() { this.classList.toggle('on'); agentMode = this.classList.contains('on'); $('agentBtn').classList.toggle('active', agentMode); $('agentBadge').style.display = agentMode ? 'flex' : 'none'; });
+  $('autoExecToggle').addEventListener('click', function() { this.classList.toggle('on'); autoExec = this.classList.contains('on'); });
+  document.querySelectorAll('.feature-card').forEach(card => card.addEventListener('click', () => { $('chatInput').value = card.dataset.prompt; sendMessage(); }));
 }
 
 // ========== CHAT ==========
 function newChat() {
   messages = [];
-  $("chatArea").innerHTML = "";
-  $("chatArea").classList.remove("active");
-  $("hero").style.display = "flex";
-  $("featureCards").style.display = "flex";
-  $("sidebar").classList.remove("open");
-  $("sidebarOverlay").classList.remove("show");
+  $('chatArea').innerHTML = '';
+  $('chatArea').classList.remove('active');
+  $('hero').style.display = 'flex';
+  $('featureCards').style.display = 'flex';
+  $('sidebar').classList.remove('open');
+  $('sidebarOverlay').classList.remove('show');
 }
 
 async function sendMessage() {
-  const text = $("chatInput").value.trim();
+  const text = $('chatInput').value.trim();
   if (!text || isTyping) return;
-  $("chatInput").value = "";
+  $('chatInput').value = '';
 
-  $("hero").style.display = "none";
-  $("featureCards").style.display = "none";
-  $("chatArea").classList.add("active");
+  $('hero').style.display = 'none';
+  $('featureCards').style.display = 'none';
+  $('chatArea').classList.add('active');
 
-  addMessage(text, "user");
-  messages.push({role:"user", content:text});
+  addMessage(text, 'user');
+  messages.push({role:'user', content:text});
 
-  if (agentMode && (text.startsWith("!") || text.startsWith("/") || text.startsWith("$"))) {
-    const cmd = text.replace(/^[!/$]/, "").trim();
+  // Agent mode — check for command
+  if (agentMode && (text.startsWith('!') || text.startsWith('/') || text.startsWith('$'))) {
+    const cmd = text.replace(/^[!/$]/, '').trim();
     showTyping();
+    const result = await fetch(API_BASE + '/api/vps/exec', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({command:cmd}) });
+    const data = await result.json();
     hideTyping();
-    addVPSMessage(cmd, {stdout:"<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ffaa00" stroke-width="2" style="vertical-align:middle;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> VPS agent requires backend server. Deploy on Railway/Render for full VPS access.", stderr:"", returncode:1});
+    addVPSMessage(cmd, data);
     return;
   }
 
-  if (isWebSearch || text.toLowerCase().includes("search") || text.toLowerCase().includes("find")) {
+  // Web search
+  if (isWebSearch || text.toLowerCase().includes('search') || text.toLowerCase().includes('find')) {
     showTyping();
-    const searchQuery = text.replace(/search|find|web|about/gi, "").trim() || text;
+    const searchQuery = text.replace(/search|find|web|about/gi, '').trim() || text;
+    const r = await fetch(API_BASE + '/api/websearch', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({query:searchQuery}) });
+    const data = await r.json();
     hideTyping();
-    addMessage("<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#00ccff" stroke-width="2" style="vertical-align:middle;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> Web Search: " + searchQuery + "
-
-<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ffaa00" stroke-width="2" style="vertical-align:middle;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Web search requires backend. Results would appear here.", "bot");
+    addWebSearchMessage(data);
     isWebSearch = false;
-    $("webSearchBtn").classList.remove("active");
+    $('webSearchBtn').classList.remove('active');
     return;
   }
 
   showTyping();
   try {
-    const r = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method:"POST",
-      headers:{"Authorization":"Bearer " + apiKey, "Content-Type":"application/json", "HTTP-Referer":location.href, "X-Title":"WormGPT"},
-      body:JSON.stringify({model:currentModel, messages:messages})
+    const r = await fetch(API_BASE + '/api/chat', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({messages:messages, model:currentModel, api_key:apiKey, persona:currentPersona})
     });
     const data = await r.json();
     hideTyping();
-    if (data.error) { addMessage("API Error: " + (data.error.message || JSON.stringify(data.error)), "bot"); }
-    else {
-      const reply = data.choices[0].message.content;
-      addMessage(reply, "bot", currentPersona);
-      messages.push({role:"assistant", content:reply});
-    }
+    addMessage(data.response, 'bot', data.persona);
+    messages.push({role:'assistant', content:data.response});
   } catch(e) {
     hideTyping();
-    addMessage("Error: " + e.message, "bot");
+    addMessage('Error: ' + e.message, 'bot');
   }
   saveChat();
 }
 
 function addMessage(text, sender, personaName) {
-  const div = document.createElement("div");
+  const div = document.createElement('div');
   div.className = `message message-${sender}`;
-  const time = new Date().toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"});
-  const name = sender === "bot" ? (personaName || "Worm") : "You";
-  const avatar = sender === "bot" ? "<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:4px;"><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4"/><line x1="8" y1="16" x2="8" y2="16"/><line x1="16" y1="16" x2="16" y2="16"/></svg>" : "<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="2" style="vertical-align:middle;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>";
+  const time = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+  const name = sender === 'bot' ? (personaName || 'Worm') : 'You';
+  const avatar = sender === 'bot' ? '🤖' : '👤';
 
-  if (sender === "bot") {
+  if (sender === 'bot') {
     div.innerHTML = `
       <div class="msg-bubble">
         <div class="msg-header">
@@ -673,156 +894,714 @@ function addMessage(text, sender, personaName) {
   } else {
     div.innerHTML = `<div class="msg-bubble">${escapeHtml(text)}</div>`;
   }
-  $("chatArea").appendChild(div);
-  $("chatArea").scrollTop = $("chatArea").scrollHeight;
+  $('chatArea').appendChild(div);
+  $('chatArea').scrollTop = $('chatArea').scrollHeight;
 }
 
 function addVPSMessage(cmd, data) {
-  const div = document.createElement("div");
-  div.className = "message message-bot";
-  const time = new Date().toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"});
+  const div = document.createElement('div');
+  div.className = 'message message-bot';
+  const time = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
   div.innerHTML = `
     <div class="msg-bubble">
       <div class="msg-header">
-        <div class="msg-avatar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#00ff88" stroke-width="2" style="vertical-align:middle;"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div>
+        <div class="msg-avatar">🖥️</div>
         <span class="msg-name">VPS Agent</span>
         <span class="msg-time">${time}</span>
       </div>
-      <div class="execute-anim"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ff0040" stroke-width="2" style="vertical-align:middle;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10"/></svg> Executing: ${escapeHtml(cmd)}</div>
+      <div class="execute-anim">⚡ Executing: ${escapeHtml(cmd)}</div>
       <div class="vps-output">
         <div class="vps-label">OUTPUT</div>
-        ${escapeHtml(data.stdout || "")}
-        ${data.stderr ? "<div style=\"color:#ff3333;margin-top:8px\">" + escapeHtml(data.stderr) + "</div>" : ""}
+        ${escapeHtml(data.stdout || '')}
+        ${data.stderr ? '<div style="color:#ff3333;margin-top:8px">' + escapeHtml(data.stderr) + '</div>' : ''}
         <div style="color:#666;margin-top:8px;font-size:10px">Exit code: ${data.returncode}</div>
       </div>
     </div>`;
-  $("chatArea").appendChild(div);
-  $("chatArea").scrollTop = $("chatArea").scrollHeight;
-  logTerminal(`$ ${cmd}\n${data.stdout}\n${data.stderr ? "ERR: " + data.stderr + "\n" : ""}exit: ${data.returncode}\n---`);
+  $('chatArea').appendChild(div);
+  $('chatArea').scrollTop = $('chatArea').scrollHeight;
+  // Also log to terminal
+  logTerminal(`$ ${cmd}
+${data.stdout}
+${data.stderr ? 'ERR: ' + data.stderr + '
+' : ''}exit: ${data.returncode}
+---`);
 }
 
 function addWebSearchMessage(data) {
-  const div = document.createElement("div");
-  div.className = "message message-bot";
-  const time = new Date().toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"});
-  let resultsHtml = "";
+  const div = document.createElement('div');
+  div.className = 'message message-bot';
+  const time = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+  let resultsHtml = '';
   if (data.results && data.results.length) {
-    resultsHtml = `<div class="web-results"><h4><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#00ccff" stroke-width="2" style="vertical-align:middle;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> Web Results for "${escapeHtml(data.query)}"</h4>` + 
-      data.results.map(r => `<div class="result-item"><strong>${escapeHtml(r.title)}</strong><br>${escapeHtml(r.snippet)}</div>`).join("") + "</div>";
+    resultsHtml = `<div class="web-results"><h4>🔍 Web Results for "${escapeHtml(data.query)}"</h4>` + 
+      data.results.map(r => `<div class="result-item"><strong>${escapeHtml(r.title)}</strong><br>${escapeHtml(r.snippet)}</div>`).join('') + '</div>';
   }
-  let imagesHtml = "";
+  let imagesHtml = '';
   if (data.images && data.images.length) {
-    imagesHtml = `<div class="web-images">` + data.images.map(img => `<img src="${escapeHtml(img)}" loading="lazy" onerror="this.style.display="none"">`).join("") + `</div>`;
+    imagesHtml = `<div class="web-images">` + data.images.map(img => `<img src="${escapeHtml(img)}" loading="lazy" onerror="this.style.display='none'">`).join('') + `</div>`;
   }
   div.innerHTML = `
     <div class="msg-bubble">
       <div class="msg-header">
-        <div class="msg-avatar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#00ccff" stroke-width="2" style="vertical-align:middle;"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></div>
+        <div class="msg-avatar">🌐</div>
         <span class="msg-name">Web Search</span>
         <span class="msg-time">${time}</span>
       </div>
       ${resultsHtml}
       ${imagesHtml}
     </div>`;
-  $("chatArea").appendChild(div);
-  $("chatArea").scrollTop = $("chatArea").scrollHeight;
+  $('chatArea').appendChild(div);
+  $('chatArea').scrollTop = $('chatArea').scrollHeight;
 }
 
 function showTyping() {
   isTyping = true;
-  $("sendBtn").disabled = true;
-  const div = document.createElement("div");
-  div.className = "message message-bot";
-  div.id = "typingMsg";
+  $('sendBtn').disabled = true;
+  const div = document.createElement('div');
+  div.className = 'message message-bot';
+  div.id = 'typingMsg';
   div.innerHTML = `
     <div class="msg-bubble">
       <div class="msg-header">
-        <div class="msg-avatar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:4px;"><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4"/><line x1="8" y1="16" x2="8" y2="16"/><line x1="16" y1="16" x2="16" y2="16"/></svg></div>
+        <div class="msg-avatar">🤖</div>
         <span class="msg-name">${getPersonaName()}</span>
       </div>
       <div class="typing"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>
     </div>`;
-  $("chatArea").appendChild(div);
-  $("chatArea").scrollTop = $("chatArea").scrollHeight;
+  $('chatArea').appendChild(div);
+  $('chatArea').scrollTop = $('chatArea').scrollHeight;
 }
 
 function hideTyping() {
   isTyping = false;
-  $("sendBtn").disabled = false;
-  const t = $("typingMsg");
+  $('sendBtn').disabled = false;
+  const t = $('typingMsg');
   if (t) t.remove();
 }
 
 function getPersonaName() {
-  const map = {"worm-1":"Worm 1","worm-2":"Worm 2","worm-evil":"Worm Evil","worm-full":"Worm Full","worm-coder":"Worm Coder","worm-osint":"Worm OSINT"};
-  return map[currentPersona] || "Worm";
+  const map = {'worm-1':'Worm 1','worm-2':'Worm 2','worm-evil':'Worm Evil','worm-full':'Worm Full','worm-coder':'Worm Coder','worm-osint':'Worm OSINT'};
+  return map[currentPersona] || 'Worm';
 }
 
 // ========== TERMINAL ==========
 function execTerminal(cmd) {
   if (!cmd.trim()) return;
   logTerminal(`root@worm# ${cmd}`);
-  logTerminal("<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ffaa00" stroke-width="2" style="vertical-align:middle;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Terminal requires backend server.");
-  logTerminal("Deploy on Railway/Render for shell access.\n");
+  fetch(API_BASE + '/api/vps/exec', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({command:cmd}) })
+    .then(r => r.json())
+    .then(d => {
+      logTerminal(d.stdout || '');
+      if (d.stderr) logTerminal(`ERROR: ${d.stderr}`);
+      logTerminal(`[exit ${d.returncode}]
+`);
+    })
+    .catch(e => logTerminal(`ERROR: ${e.message}
+`));
+}
+
+function logTerminal(text) {
+  $('termBody').textContent += text + '
+';
+  $('termBody').scrollTop = $('termBody').scrollHeight;
+}
+
+// ========== FORMATTING ==========
+function formatText(text) {
+  text = escapeHtml(text);
+  text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+  text = text.replace(/\*(.*?)\*/g, '<em>$1</em>');
+  text = text.replace(/`(.*?)`/g, '<code>$1</code>');
+  text = text.replace(/```(\w+)?
+([\s\S]*?)```/g, (match, lang, code) => {
+    return `<div class="code-header"><span class="lang">${lang || 'text'}</span><button class="code-copy" onclick="copyCode(this)">Copy</button></div><pre><code>${code.trim()}</code></pre>`;
+  });
   text = text.replace(/^(#{1,6})\s+(.*)$/gm, (match, hashes, content) => {
     const level = hashes.length;
     return `<h${level}>${content}</h${level}>`;
   });
-  text = text.replace(/^-\s+(.*)$/gm, "<li>$1</li>");
-  text = text.replace(/(<li>.*<\/li>\n?)+/g, "<ul>$&</ul>");
-  text = text.replace(/\n/g, "<br>");
+  text = text.replace(/^-\s+(.*)$/gm, '<li>$1</li>');
+  text = text.replace(/(<li>.*<\/li>
+?)+/g, '<ul>$&</ul>');
+  text = text.replace(/
+/g, '<br>');
   return text;
 }
 
 function escapeHtml(text) {
-  const div = document.createElement("div");
+  const div = document.createElement('div');
   div.textContent = text;
   return div.innerHTML;
 }
 
 function copyCode(btn) {
-  const code = btn.closest(".code-header").nextElementSibling.textContent;
+  const code = btn.closest('.code-header').nextElementSibling.textContent;
   navigator.clipboard.writeText(code);
-  btn.textContent = "Copied!";
-  setTimeout(() => btn.textContent = "Copy", 1500);
+  btn.textContent = 'Copied!';
+  setTimeout(() => btn.textContent = 'Copy', 1500);
 }
 
 // ========== STORAGE ==========
 function saveChat() {
-  const chats = JSON.parse(localStorage.getItem("wormgpt_chats") || "[]");
-  const title = messages[0]?.content?.slice(0, 30) || "New Chat";
-  const existing = chats.find(c => c.id === (window.currentChatId || "temp"));
+  const chats = JSON.parse(localStorage.getItem('wormgpt_chats') || '[]');
+  const title = messages[0]?.content?.slice(0, 30) || 'New Chat';
+  const existing = chats.find(c => c.id === (window.currentChatId || 'temp'));
   if (existing) { existing.messages = messages; existing.title = title; }
   else { chats.unshift({id:Date.now().toString(),title,date:new Date().toISOString(),messages}); window.currentChatId = chats[0].id; }
-  localStorage.setItem("wormgpt_chats", JSON.stringify(chats.slice(0, 20)));
+  localStorage.setItem('wormgpt_chats', JSON.stringify(chats.slice(0, 20)));
   renderRecentChats();
 }
 
 function renderRecentChats() {
-  const chats = JSON.parse(localStorage.getItem("wormgpt_chats") || "[]");
-  $("recentChats").innerHTML = chats.slice(0, 8).map(c => `
+  const chats = JSON.parse(localStorage.getItem('wormgpt_chats') || '[]');
+  $('recentChats').innerHTML = chats.slice(0, 8).map(c => `
     <div class="sidebar-chat" data-id="${c.id}">
       <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
       <span>${escapeHtml(c.title)}</span>
     </div>
-  `).join("");
-  document.querySelectorAll(".sidebar-chat").forEach(el => el.addEventListener("click", () => loadChat(el.dataset.id)));
+  `).join('');
+  document.querySelectorAll('.sidebar-chat').forEach(el => el.addEventListener('click', () => loadChat(el.dataset.id)));
 }
 
 function loadChat(id) {
-  const chats = JSON.parse(localStorage.getItem("wormgpt_chats") || "[]");
+  const chats = JSON.parse(localStorage.getItem('wormgpt_chats') || '[]');
   const chat = chats.find(c => c.id === id);
   if (!chat) return;
   messages = chat.messages || [];
   window.currentChatId = id;
-  $("chatArea").innerHTML = "";
-  $("chatArea").classList.add("active");
-  $("hero").style.display = "none";
-  $("featureCards").style.display = "none";
-  messages.forEach(m => addMessage(m.content, m.role === "user" ? "user" : "bot", m.role === "assistant" ? getPersonaName() : null));
-  $("sidebar").classList.remove("open");
-  $("sidebarOverlay").classList.remove("show");
+  $('chatArea').innerHTML = '';
+  $('hero').style.display = 'none';
+  $('featureCards').style.display = 'none';
+  $('chatArea').classList.add('active');
+  messages.forEach(m => addMessage(m.content, m.role === 'user' ? 'user' : 'bot'));
+  $('sidebar').classList.remove('open');
+  $('sidebarOverlay').classList.remove('show');
 }
+
+// ========== AUTO CONNECT VPS ON LOAD ==========
+window.addEventListener('load', async () => {
+  setTimeout(async () => {
+    try {
+      const r = await fetch(API_BASE + '/api/vps/status');
+      const d = await r.json();
+      if (d.status === 'connected') {
+        $('vpsStatusText').textContent = 'VPS LIVE — ' + d.host + ':' + d.port;
+        $('vpsStatusText').style.color = '#00ff88';
+        agentMode = true;
+        $('agentBtn').classList.add('active');
+        $('agentBadge').style.display = 'flex';
+        if ($('termBody')) {
+          logTerminal("=== VPS AUTO-CONNECTED ===");
+          logTerminal("Host: " + d.host + ":" + d.port);
+          logTerminal("User: " + d.user);
+          logTerminal("===========================");
+        }
+      }
+    } catch(e) {}
+  }, 1500);
+});
+
+</script>
+
+</div>
+
+<script>
+// ===== LOCK SYSTEM =====
+const ACCESS_KEY = "DRC2026X9K7M3P8Q";
+
+function handleUnlock() {
+  var input = document.getElementById("keyInput");
+  var btn = document.getElementById("unlockBtn");
+  if(!input || !btn) return;
+  var entered = input.value.trim();
+  if(entered === ACCESS_KEY) {
+    unlockApp();
+  } else {
+    showDenied();
+  }
+}
+
+function unlockApp() {
+  var lock = document.getElementById("lockScreen");
+  var app = document.getElementById("app");
+  if(lock) lock.classList.add("hidden");
+  setTimeout(function(){
+    if(lock) lock.style.display="none";
+    if(app) app.classList.add("show");
+    initApp();
+  },600);
+}
+
+function showDenied() {
+  var denied = document.getElementById("deniedScreen");
+  var lock = document.getElementById("lockScreen");
+  if(lock) lock.style.display="none";
+  if(denied) denied.classList.add("show");
+  var count = 5;
+  var el = document.getElementById("deniedCountdown");
+  var timer = setInterval(function(){
+    count--;
+    if(el) el.textContent = count;
+    if(count <= 0) {
+      clearInterval(timer);
+      retryAccess();
+    }
+  },1000);
+}
+
+function retryAccess() {
+  var denied = document.getElementById("deniedScreen");
+  var lock = document.getElementById("lockScreen");
+  if(denied) denied.classList.remove("show");
+  if(lock) {
+    lock.style.display="flex";
+    lock.classList.remove("hidden");
+  }
+  var input = document.getElementById("keyInput");
+  if(input) { input.value=""; input.focus(); }
+}
+
+// ===== PARTICLES =====
+(function(){
+  var container = document.getElementById("particles");
+  if(!container) return;
+  for(var i=0;i<30;i++){
+    var p = document.createElement("div");
+    p.className="particle";
+    p.style.left=Math.random()*100+"%";
+    p.style.animationDelay=Math.random()*8+"s";
+    p.style.animationDuration=(6+Math.random()*6)+"s";
+    container.appendChild(p);
+  }
+})();
+
+// ===== CHAT APP =====
+
+// ========== STATE ==========
+let apiKey = localStorage.getItem('wormgpt_key') || '';
+let currentModel = 'deepseek/deepseek-chat-v3-0324';
+let currentPersona = 'worm-1';
+let agentMode = false;
+let autoExec = false;
+let messages = [];
+let isWebSearch = false;
+let isTyping = false;
+
+const API_BASE = '';
+
+// ========== DOM ==========
+const $ = id => document.getElementById(id);
+
+// ========== INIT ==========
+window.addEventListener('DOMContentLoaded', () => {
+  // Direct access — key can be added in settings
+  $('keyScreen').classList.add('hidden');
+  initApp();
+});
+
+function initApp() {
+  loadModels();
+  loadPersonas();
+  checkVPSStatus();
+  setupEvents();
+  renderRecentChats();
+}
+
+// ========== KEY SCREEN ==========
+$('keyBtn').addEventListener('click', async () => {
+  const key = $('keyInput').value.trim();
+  if (!key.startsWith('sk-or-')) { $('keyError').textContent = 'Invalid key format'; return; }
+  const ok = await testKey(key);
+  if (ok) { apiKey = key; localStorage.setItem('wormgpt_key', key); $('keyScreen').classList.add('hidden'); initApp(); }
+  else { $('keyError').textContent = 'Key invalid or model offline'; }
+});
+
+$('keySkip').addEventListener('click', () => { $('keyScreen').classList.add('hidden'); initApp(); });
+
+async function testKey(key) {
+  try {
+    const r = await fetch(API_BASE + '/api/test-model', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({api_key:key}) });
+    const d = await r.json();
+    return d.status === 'online';
+  } catch(e) { return false; }
+}
+
+// ========== VPS STATUS ==========
+async function checkVPSStatus() {
+  try {
+    const r = await fetch(API_BASE + '/api/vps/status');
+    const d = await r.json();
+    if (d.status === 'connected') {
+      $('vpsStatusText').textContent = 'VPS Agent LIVE';
+      $('vpsStatusText').style.color = '#00ff88';
+    }
+  } catch(e) {
+    $('vpsStatusText').textContent = 'VPS Standby';
+    $('vpsStatusText').style.color = '#ffcc00';
+  }
+}
+
+// ========== MODELS ==========
+function loadModels() {
+  const models = [
+    {id:"google/gemini-2.5-flash-preview",name:"Worm v-Auto",tags:["FAST","CODING","FREE"],desc:"Smart dynamic routing"},
+    {id:"deepseek/deepseek-chat-v3-0324",name:"Worm v5.2",tags:["THINKING","CODING","SPECIALIZED","FREE"],desc:"Flagship thinking core",star:true},
+    {id:"meta-llama/llama-4-scout",name:"Worm v5.1",tags:["INTELLIGENCE","FREE"],desc:"Ultimate intelligence"},
+    {id:"qwen/qwen3-235b-a22b",name:"Worm v5.0",tags:["COMPLEX","FREE"],desc:"Complex & fully uncensored"},
+    {id:"mistralai/mistral-small-3.2-24b-instruct",name:"Worm v4.1",tags:["LOGIC","FREE"],desc:"High-speed logic core"},
+    {id:"google/gemma-3-27b-it",name:"Worm v4.0",tags:["LITE","FREE"],desc:"Lite & fast"}
+  ];
+  $('modelList').innerHTML = models.map(m => `
+    <div class="model-item ${m.id===currentModel?'selected':''}" data-id="${m.id}">
+      <div>
+        <div class="model-item-name">${m.name} ${m.star?'<span class="model-star">⭐</span>':''}</div>
+        <div class="model-item-desc">${m.desc}</div>
+        <div class="model-item-tags">${m.tags.map(t=>`<span class="model-tag tag-${t==='FREE'?'green':t==='THINKING'?'yellow':'red'}">${t}</span>`).join('')}</div>
+      </div>
+    </div>
+  `).join('');
+  document.querySelectorAll('.model-item').forEach(el => el.addEventListener('click', () => { currentModel = el.dataset.id; $('modelLabel').textContent = models.find(m=>m.id===currentModel)?.name || 'Worm'; $('modelDropdown').classList.remove('show'); }));
+}
+
+// ========== PERSONAS ==========
+function loadPersonas() {
+  const personas = {
+    "worm-1":{name:"Worm 1",icon:"🐛",desc:"Standard assistant — fast, reliable."},
+    "worm-2":{name:"Worm 2",icon:"🐍",desc:"Advanced reasoning — deep analysis."},
+    "worm-evil":{name:"Worm Evil",icon:"😈",desc:"FULLY UNRESTRICTED — pure chaos."},
+    "worm-full":{name:"Worm Full Unrestricted",icon:"🔥",desc:"Maximum power — unlimited."},
+    "worm-coder":{name:"Worm Coder",icon:"💻",desc:"Elite coding — scripts, automation."},
+    "worm-osint":{name:"Worm OSINT",icon:"🕵️",desc:"Intelligence — recon, tracking."}
+  };
+  $('personaList').innerHTML = Object.entries(personas).map(([k,v]) => `
+    <div class="persona-item ${k===currentPersona?'selected':''}" data-id="${k}">
+      <div class="persona-icon">${v.icon}</div>
+      <div class="persona-info">
+        <div class="persona-name">${v.name}</div>
+        <div class="persona-desc">${v.desc}</div>
+      </div>
+    </div>
+  `).join('');
+  document.querySelectorAll('.persona-item').forEach(el => el.addEventListener('click', () => { currentPersona = el.dataset.id; $('personaDropdown').classList.remove('show'); }));
+}
+
+// ========== EVENTS ==========
+function setupEvents() {
+  $('menuBtn').addEventListener('click', () => { $('sidebar').classList.toggle('open'); $('sidebarOverlay').classList.toggle('show'); $('menuBtn').classList.toggle('active'); });
+  $('sidebarOverlay').addEventListener('click', () => { $('sidebar').classList.remove('open'); $('sidebarOverlay').classList.remove('show'); $('menuBtn').classList.remove('active'); });
+  $('newChatBtn').addEventListener('click', newChat);
+  $('sendBtn').addEventListener('click', sendMessage);
+  $('chatInput').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } });
+  $('modelSelect').addEventListener('click', () => $('modelDropdown').classList.toggle('show'));
+  $('closeModel').addEventListener('click', () => $('modelDropdown').classList.remove('show'));
+  $('personaBtn').addEventListener('click', () => $('personaDropdown').classList.toggle('show'));
+  $('closePersona').addEventListener('click', () => $('personaDropdown').classList.remove('show'));
+  $('settingsBtn').addEventListener('click', () => { $('settingsModal').classList.add('show'); $('settingsKey').value = apiKey; });
+  $('closeSettings').addEventListener('click', () => $('settingsModal').classList.remove('show'));
+  $('saveKeyBtn').addEventListener('click', () => { apiKey = $('settingsKey').value.trim(); localStorage.setItem('wormgpt_key', apiKey); $('settingsModal').classList.remove('show'); });
+  $('webSearchBtn').addEventListener('click', () => { isWebSearch = !isWebSearch; $('webSearchBtn').classList.toggle('active', isWebSearch); });
+  $('agentBtn').addEventListener('click', () => { agentMode = !agentMode; $('agentBtn').classList.toggle('active', agentMode); $('agentBadge').style.display = agentMode ? 'flex' : 'none'; $('vpsTerminal').classList.toggle('show', agentMode); });
+  $('closeTerminal').addEventListener('click', () => { $('vpsTerminal').classList.remove('show'); agentMode = false; $('agentBtn').classList.remove('active'); $('agentBadge').style.display = 'none'; });
+  $('termInput').addEventListener('keydown', e => { if (e.key === 'Enter') { execTerminal($('termInput').value); $('termInput').value = ''; } });
+  $('darkToggle').addEventListener('click', function() { this.classList.toggle('on'); });
+  $('agentToggle').addEventListener('click', function() { this.classList.toggle('on'); agentMode = this.classList.contains('on'); $('agentBtn').classList.toggle('active', agentMode); $('agentBadge').style.display = agentMode ? 'flex' : 'none'; });
+  $('autoExecToggle').addEventListener('click', function() { this.classList.toggle('on'); autoExec = this.classList.contains('on'); });
+  document.querySelectorAll('.feature-card').forEach(card => card.addEventListener('click', () => { $('chatInput').value = card.dataset.prompt; sendMessage(); }));
+}
+
+// ========== CHAT ==========
+function newChat() {
+  messages = [];
+  $('chatArea').innerHTML = '';
+  $('chatArea').classList.remove('active');
+  $('hero').style.display = 'flex';
+  $('featureCards').style.display = 'flex';
+  $('sidebar').classList.remove('open');
+  $('sidebarOverlay').classList.remove('show');
+}
+
+async function sendMessage() {
+  const text = $('chatInput').value.trim();
+  if (!text || isTyping) return;
+  $('chatInput').value = '';
+
+  $('hero').style.display = 'none';
+  $('featureCards').style.display = 'none';
+  $('chatArea').classList.add('active');
+
+  addMessage(text, 'user');
+  messages.push({role:'user', content:text});
+
+  // Agent mode — check for command
+  if (agentMode && (text.startsWith('!') || text.startsWith('/') || text.startsWith('$'))) {
+    const cmd = text.replace(/^[!/$]/, '').trim();
+    showTyping();
+    const result = await fetch(API_BASE + '/api/vps/exec', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({command:cmd}) });
+    const data = await result.json();
+    hideTyping();
+    addVPSMessage(cmd, data);
+    return;
+  }
+
+  // Web search
+  if (isWebSearch || text.toLowerCase().includes('search') || text.toLowerCase().includes('find')) {
+    showTyping();
+    const searchQuery = text.replace(/search|find|web|about/gi, '').trim() || text;
+    const r = await fetch(API_BASE + '/api/websearch', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({query:searchQuery}) });
+    const data = await r.json();
+    hideTyping();
+    addWebSearchMessage(data);
+    isWebSearch = false;
+    $('webSearchBtn').classList.remove('active');
+    return;
+  }
+
+  showTyping();
+  try {
+    const r = await fetch(API_BASE + '/api/chat', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({messages:messages, model:currentModel, api_key:apiKey, persona:currentPersona})
+    });
+    const data = await r.json();
+    hideTyping();
+    addMessage(data.response, 'bot', data.persona);
+    messages.push({role:'assistant', content:data.response});
+  } catch(e) {
+    hideTyping();
+    addMessage('Error: ' + e.message, 'bot');
+  }
+  saveChat();
+}
+
+function addMessage(text, sender, personaName) {
+  const div = document.createElement('div');
+  div.className = `message message-${sender}`;
+  const time = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+  const name = sender === 'bot' ? (personaName || 'Worm') : 'You';
+  const avatar = sender === 'bot' ? '🤖' : '👤';
+
+  if (sender === 'bot') {
+    div.innerHTML = `
+      <div class="msg-bubble">
+        <div class="msg-header">
+          <div class="msg-avatar">${avatar}</div>
+          <span class="msg-name">${name}</span>
+          <span class="msg-time">${time}</span>
+        </div>
+        <div class="msg-content">${formatText(text)}</div>
+      </div>`;
+  } else {
+    div.innerHTML = `<div class="msg-bubble">${escapeHtml(text)}</div>`;
+  }
+  $('chatArea').appendChild(div);
+  $('chatArea').scrollTop = $('chatArea').scrollHeight;
+}
+
+function addVPSMessage(cmd, data) {
+  const div = document.createElement('div');
+  div.className = 'message message-bot';
+  const time = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+  div.innerHTML = `
+    <div class="msg-bubble">
+      <div class="msg-header">
+        <div class="msg-avatar">🖥️</div>
+        <span class="msg-name">VPS Agent</span>
+        <span class="msg-time">${time}</span>
+      </div>
+      <div class="execute-anim">⚡ Executing: ${escapeHtml(cmd)}</div>
+      <div class="vps-output">
+        <div class="vps-label">OUTPUT</div>
+        ${escapeHtml(data.stdout || '')}
+        ${data.stderr ? '<div style="color:#ff3333;margin-top:8px">' + escapeHtml(data.stderr) + '</div>' : ''}
+        <div style="color:#666;margin-top:8px;font-size:10px">Exit code: ${data.returncode}</div>
+      </div>
+    </div>`;
+  $('chatArea').appendChild(div);
+  $('chatArea').scrollTop = $('chatArea').scrollHeight;
+  // Also log to terminal
+  logTerminal(`$ ${cmd}
+${data.stdout}
+${data.stderr ? 'ERR: ' + data.stderr + '
+' : ''}exit: ${data.returncode}
+---`);
+}
+
+function addWebSearchMessage(data) {
+  const div = document.createElement('div');
+  div.className = 'message message-bot';
+  const time = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+  let resultsHtml = '';
+  if (data.results && data.results.length) {
+    resultsHtml = `<div class="web-results"><h4>🔍 Web Results for "${escapeHtml(data.query)}"</h4>` + 
+      data.results.map(r => `<div class="result-item"><strong>${escapeHtml(r.title)}</strong><br>${escapeHtml(r.snippet)}</div>`).join('') + '</div>';
+  }
+  let imagesHtml = '';
+  if (data.images && data.images.length) {
+    imagesHtml = `<div class="web-images">` + data.images.map(img => `<img src="${escapeHtml(img)}" loading="lazy" onerror="this.style.display='none'">`).join('') + `</div>`;
+  }
+  div.innerHTML = `
+    <div class="msg-bubble">
+      <div class="msg-header">
+        <div class="msg-avatar">🌐</div>
+        <span class="msg-name">Web Search</span>
+        <span class="msg-time">${time}</span>
+      </div>
+      ${resultsHtml}
+      ${imagesHtml}
+    </div>`;
+  $('chatArea').appendChild(div);
+  $('chatArea').scrollTop = $('chatArea').scrollHeight;
+}
+
+function showTyping() {
+  isTyping = true;
+  $('sendBtn').disabled = true;
+  const div = document.createElement('div');
+  div.className = 'message message-bot';
+  div.id = 'typingMsg';
+  div.innerHTML = `
+    <div class="msg-bubble">
+      <div class="msg-header">
+        <div class="msg-avatar">🤖</div>
+        <span class="msg-name">${getPersonaName()}</span>
+      </div>
+      <div class="typing"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>
+    </div>`;
+  $('chatArea').appendChild(div);
+  $('chatArea').scrollTop = $('chatArea').scrollHeight;
+}
+
+function hideTyping() {
+  isTyping = false;
+  $('sendBtn').disabled = false;
+  const t = $('typingMsg');
+  if (t) t.remove();
+}
+
+function getPersonaName() {
+  const map = {'worm-1':'Worm 1','worm-2':'Worm 2','worm-evil':'Worm Evil','worm-full':'Worm Full','worm-coder':'Worm Coder','worm-osint':'Worm OSINT'};
+  return map[currentPersona] || 'Worm';
+}
+
+// ========== TERMINAL ==========
+function execTerminal(cmd) {
+  if (!cmd.trim()) return;
+  logTerminal(`root@worm# ${cmd}`);
+  fetch(API_BASE + '/api/vps/exec', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({command:cmd}) })
+    .then(r => r.json())
+    .then(d => {
+      logTerminal(d.stdout || '');
+      if (d.stderr) logTerminal(`ERROR: ${d.stderr}`);
+      logTerminal(`[exit ${d.returncode}]
+`);
+    })
+    .catch(e => logTerminal(`ERROR: ${e.message}
+`));
+}
+
+function logTerminal(text) {
+  $('termBody').textContent += text + '
+';
+  $('termBody').scrollTop = $('termBody').scrollHeight;
+}
+
+// ========== FORMATTING ==========
+function formatText(text) {
+  text = escapeHtml(text);
+  text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+  text = text.replace(/\*(.*?)\*/g, '<em>$1</em>');
+  text = text.replace(/`(.*?)`/g, '<code>$1</code>');
+  text = text.replace(/```(\w+)?
+([\s\S]*?)```/g, (match, lang, code) => {
+    return `<div class="code-header"><span class="lang">${lang || 'text'}</span><button class="code-copy" onclick="copyCode(this)">Copy</button></div><pre><code>${code.trim()}</code></pre>`;
+  });
+  text = text.replace(/^(#{1,6})\s+(.*)$/gm, (match, hashes, content) => {
+    const level = hashes.length;
+    return `<h${level}>${content}</h${level}>`;
+  });
+  text = text.replace(/^-\s+(.*)$/gm, '<li>$1</li>');
+  text = text.replace(/(<li>.*<\/li>
+?)+/g, '<ul>$&</ul>');
+  text = text.replace(/
+/g, '<br>');
+  return text;
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+function copyCode(btn) {
+  const code = btn.closest('.code-header').nextElementSibling.textContent;
+  navigator.clipboard.writeText(code);
+  btn.textContent = 'Copied!';
+  setTimeout(() => btn.textContent = 'Copy', 1500);
+}
+
+// ========== STORAGE ==========
+function saveChat() {
+  const chats = JSON.parse(localStorage.getItem('wormgpt_chats') || '[]');
+  const title = messages[0]?.content?.slice(0, 30) || 'New Chat';
+  const existing = chats.find(c => c.id === (window.currentChatId || 'temp'));
+  if (existing) { existing.messages = messages; existing.title = title; }
+  else { chats.unshift({id:Date.now().toString(),title,date:new Date().toISOString(),messages}); window.currentChatId = chats[0].id; }
+  localStorage.setItem('wormgpt_chats', JSON.stringify(chats.slice(0, 20)));
+  renderRecentChats();
+}
+
+function renderRecentChats() {
+  const chats = JSON.parse(localStorage.getItem('wormgpt_chats') || '[]');
+  $('recentChats').innerHTML = chats.slice(0, 8).map(c => `
+    <div class="sidebar-chat" data-id="${c.id}">
+      <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+      <span>${escapeHtml(c.title)}</span>
+    </div>
+  `).join('');
+  document.querySelectorAll('.sidebar-chat').forEach(el => el.addEventListener('click', () => loadChat(el.dataset.id)));
+}
+
+function loadChat(id) {
+  const chats = JSON.parse(localStorage.getItem('wormgpt_chats') || '[]');
+  const chat = chats.find(c => c.id === id);
+  if (!chat) return;
+  messages = chat.messages || [];
+  window.currentChatId = id;
+  $('chatArea').innerHTML = '';
+  $('hero').style.display = 'none';
+  $('featureCards').style.display = 'none';
+  $('chatArea').classList.add('active');
+  messages.forEach(m => addMessage(m.content, m.role === 'user' ? 'user' : 'bot'));
+  $('sidebar').classList.remove('open');
+  $('sidebarOverlay').classList.remove('show');
+}
+
+// ========== AUTO CONNECT VPS ON LOAD ==========
+window.addEventListener('load', async () => {
+  setTimeout(async () => {
+    try {
+      const r = await fetch(API_BASE + '/api/vps/status');
+      const d = await r.json();
+      if (d.status === 'connected') {
+        $('vpsStatusText').textContent = 'VPS LIVE — ' + d.host + ':' + d.port;
+        $('vpsStatusText').style.color = '#00ff88';
+        agentMode = true;
+        $('agentBtn').classList.add('active');
+        $('agentBadge').style.display = 'flex';
+        if ($('termBody')) {
+          logTerminal("=== VPS AUTO-CONNECTED ===");
+          logTerminal("Host: " + d.host + ":" + d.port);
+          logTerminal("User: " + d.user);
+          logTerminal("===========================");
+        }
+      }
+    } catch(e) {}
+  }, 1500);
+});
+
+
 </script>
 </body>
 </html>
