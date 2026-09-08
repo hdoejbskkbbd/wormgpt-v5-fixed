@@ -481,9 +481,10 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
     <div class="lock-title">WORMGPT</div>
     <div class="lock-subtitle">SECURE ACCESS PORTAL</div>
     <div class="key-input-wrap">
-      <input type="password" class="key-input" id="keyInput" placeholder="Enter access key..." autocomplete="off" autocapitalize="off" spellcheck="false" onkeydown="if(event.key==='Enter'){event.preventDefault();handleUnlock();}">
+      <input type="password" class="key-input" id="accessKeyInput" placeholder="Enter access key..." autocomplete="off" autocapitalize="off" spellcheck="false" onkeydown="if(event.key==='Enter'){event.preventDefault();handleUnlock();}">
     </div>
-    <button class="unlock-btn" id="unlockBtn" onclick="handleUnlock()">UNLOCK ACCESS</button>
+    <button type="button" class="unlock-btn" id="unlockBtn" onclick="handleUnlock()">UNLOCK ACCESS</button>
+    <div id="lockError" style="color:#ff3355;font-size:12px;margin-top:10px;min-height:18px"></div>
     <div class="lock-footer">anonymous world // DRC SECURE</div>
   </div>
 </div>
@@ -510,7 +511,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
   <div class="key-logo"><div class="key-logo-inner"></div></div>
   <div class="key-title">WORMGPT v5.2</div>
   <div class="key-subtitle">Add your OpenRouter API key for unrestricted access. Or use the default — keys are managed server-side.</div>
-  <input type="password" class="key-input" id="keyInput" placeholder="sk-or-v1-...">
+  <input type="password" class="key-input" id="apiKeyInput" placeholder="sk-or-v1-...">
   <div class="key-error" id="keyError"></div>
   <button class="key-btn" id="keyBtn">ADD CUSTOM KEY</button>
   <div class="key-skip" id="keySkip">Skip for now →</div>
@@ -722,7 +723,7 @@ function initApp() {
 
 // ========== KEY SCREEN ==========
 $('keyBtn').addEventListener('click', async () => {
-  const key = $('keyInput').value.trim();
+  const key = ($('apiKeyInput')||$('keyInput')).value.trim();
   if (!key.startsWith('sk-or-')) { $('keyError').textContent = 'Invalid key format'; return; }
   const ok = await testKey(key);
   if (ok) { apiKey = key; localStorage.setItem('wormgpt_key', key); $('keyScreen').classList.add('hidden'); initApp(); }
@@ -1132,11 +1133,16 @@ window.addEventListener('load', async () => {
 const ACCESS_KEY = "DRC2026X9K7M3P8Q";
 
 function handleUnlock() {
-  var input = document.getElementById("keyInput");
-  var btn = document.getElementById("unlockBtn");
-  if(!input || !btn) return;
-  var entered = input.value.trim();
-  if(entered === ACCESS_KEY) {
+  var input = document.getElementById("accessKeyInput") || document.getElementById("keyInput");
+  var err = document.getElementById("lockError");
+  if(!input){ alert("Unlock input missing"); return; }
+  var entered = (input.value||"").trim();
+  if(!entered){ if(err) err.textContent="Key daalo"; return; }
+  if(entered === ACCESS_KEY || entered.indexOf("sk-or-")==0) {
+    if(entered.indexOf("sk-or-")==0){
+      try{ localStorage.setItem("wormgpt_key", entered); localStorage.setItem("worm_api_key", entered); apiKey = entered; }catch(e){}
+    }
+    localStorage.setItem("wg_unlocked","1");
     unlockApp();
   } else {
     showDenied();
@@ -1146,12 +1152,15 @@ function handleUnlock() {
 function unlockApp() {
   var lock = document.getElementById("lockScreen");
   var app = document.getElementById("app");
-  if(lock) lock.classList.add("hidden");
-  setTimeout(function(){
-    if(lock) lock.style.display="none";
-    if(app) app.classList.add("show");
-    initApp();
-  },600);
+  if(lock){ lock.classList.add("hidden"); setTimeout(function(){
+    lock.style.display="none";
+    if(app){ app.classList.add("show"); app.style.display="block"; }
+    try{ if(typeof initApp==="function") initApp(); }catch(e){ console.error(e); }
+  },400); }
+  else {
+    if(app){ app.classList.add("show"); app.style.display="block"; }
+    try{ if(typeof initApp==="function") initApp(); }catch(e){}
+  }
 }
 
 function showDenied() {
@@ -1232,7 +1241,7 @@ function initApp() {
 
 // ========== KEY SCREEN ==========
 $('keyBtn').addEventListener('click', async () => {
-  const key = $('keyInput').value.trim();
+  const key = ($('apiKeyInput')||$('keyInput')).value.trim();
   if (!key.startsWith('sk-or-')) { $('keyError').textContent = 'Invalid key format'; return; }
   const ok = await testKey(key);
   if (ok) { apiKey = key; localStorage.setItem('wormgpt_key', key); $('keyScreen').classList.add('hidden'); initApp(); }
