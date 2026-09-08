@@ -481,10 +481,10 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
     <div class="lock-title">WORMGPT</div>
     <div class="lock-subtitle">SECURE ACCESS PORTAL</div>
     <div class="key-input-wrap">
-      <input type="password" class="key-input" id="accessKeyInput" placeholder="Enter access key..." autocomplete="off" autocapitalize="off" spellcheck="false" onkeydown="if(event.key==='Enter'){event.preventDefault();handleUnlock();}">
+      <input type="password" class="key-input" id="accessKeyInput" placeholder="Enter access key DRC2026..." autocomplete="off" autocapitalize="off" spellcheck="false">
     </div>
-    <button type="button" class="unlock-btn" id="unlockBtn" onclick="handleUnlock()">UNLOCK ACCESS</button>
-    <div id="lockError" style="color:#ff3355;font-size:12px;margin-top:10px;min-height:18px"></div>
+    <button type="button" class="unlock-btn" id="unlockBtn">UNLOCK ACCESS</button>
+    <div id="lockError" style="color:#ff3355;font-size:13px;margin-top:12px;min-height:18px"></div>
     <div class="lock-footer">anonymous world // DRC SECURE</div>
   </div>
 </div>
@@ -708,9 +708,8 @@ const $ = id => document.getElementById(id);
 
 // ========== INIT ==========
 window.addEventListener('DOMContentLoaded', () => {
-  // Direct access — key can be added in settings
-  $('keyScreen').classList.add('hidden');
-  initApp();
+  try { if ($('keyScreen')) $('keyScreen').classList.add('hidden'); } catch(e) {}
+  // wait for unlock — do not initApp here
 });
 
 function initApp() {
@@ -722,23 +721,16 @@ function initApp() {
 }
 
 // ========== KEY SCREEN ==========
-$('keyBtn').addEventListener('click', async () => {
-  const key = ($('apiKeyInput')||$('keyInput')).value.trim();
-  if (!key.startsWith('sk-or-')) { $('keyError').textContent = 'Invalid key format'; return; }
-  const ok = await testKey(key);
-  if (ok) { apiKey = key; localStorage.setItem('wormgpt_key', key); $('keyScreen').classList.add('hidden'); initApp(); }
-  else { $('keyError').textContent = 'Key invalid or model offline'; }
+if ($('keyBtn')) $('keyBtn').addEventListener('click', async () => {
+  const el = $('apiKeyInput')||$('keyInput');
+  const key = (el && el.value || '').trim();
+  if (!key.startsWith('sk-or-')) { if($('keyError')) $('keyError').textContent = 'Invalid key format'; return; }
+  apiKey = key; localStorage.setItem('wormgpt_key', key); localStorage.setItem('worm_api_key', key);
+  if ($('keyScreen')) $('keyScreen').classList.add('hidden');
 });
+if ($('keySkip')) $('keySkip').addEventListener('click', () => { if ($('keyScreen')) $('keyScreen').classList.add('hidden'); });
 
-$('keySkip').addEventListener('click', () => { $('keyScreen').classList.add('hidden'); initApp(); });
-
-async function testKey(key) {
-  try {
-    const r = await fetch(API_BASE + '/api/test-model', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({api_key:key}) });
-    const d = await r.json();
-    return d.status === 'online';
-  } catch(e) { return false; }
-}
+async function testKey(key) { return !!(key && key.indexOf('sk-or-')===0); }
 
 // ========== VPS STATUS ==========
 async function checkVPSStatus() {
@@ -1128,521 +1120,104 @@ window.addEventListener('load', async () => {
 
 </div>
 
+
 <script>
-// ===== LOCK SYSTEM =====
-const ACCESS_KEY = "DRC2026X9K7M3P8Q";
+// LOCK SYSTEM — must load, no duplicate lets
+window.ACCESS_KEY = "DRC2026X9K7M3P8Q";
 
-function handleUnlock() {
-  var input = document.getElementById("accessKeyInput") || document.getElementById("keyInput");
+window.handleUnlock = function handleUnlock() {
+  var input = document.getElementById("accessKeyInput");
   var err = document.getElementById("lockError");
-  if(!input){ alert("Unlock input missing"); return; }
-  var entered = (input.value||"").trim();
-  if(!entered){ if(err) err.textContent="Key daalo"; return; }
-  if(entered === ACCESS_KEY || entered.indexOf("sk-or-")==0) {
-    if(entered.indexOf("sk-or-")==0){
-      try{ localStorage.setItem("wormgpt_key", entered); localStorage.setItem("worm_api_key", entered); apiKey = entered; }catch(e){}
+  if (!input) { alert("accessKeyInput missing"); return; }
+  var entered = (input.value || "").trim();
+  if (!entered) { if (err) err.textContent = "Key daalo"; return; }
+  if (entered === window.ACCESS_KEY || entered.indexOf("sk-or-") === 0) {
+    if (entered.indexOf("sk-or-") === 0) {
+      try {
+        localStorage.setItem("wormgpt_key", entered);
+        localStorage.setItem("worm_api_key", entered);
+        window.apiKey = entered;
+        if (typeof apiKey !== "undefined") { try { apiKey = entered; } catch(e) {} }
+      } catch (e) {}
     }
-    localStorage.setItem("wg_unlocked","1");
-    unlockApp();
+    localStorage.setItem("wg_unlocked", "1");
+    window.unlockApp();
   } else {
-    showDenied();
+    if (err) err.textContent = "Galat key. Use: DRC2026X9K7M3P8Q";
+    window.showDenied();
   }
-}
+};
 
-function unlockApp() {
+window.unlockApp = function unlockApp() {
   var lock = document.getElementById("lockScreen");
   var app = document.getElementById("app");
-  if(lock){ lock.classList.add("hidden"); setTimeout(function(){
-    lock.style.display="none";
-    if(app){ app.classList.add("show"); app.style.display="block"; }
-    try{ if(typeof initApp==="function") initApp(); }catch(e){ console.error(e); }
-  },400); }
-  else {
-    if(app){ app.classList.add("show"); app.style.display="block"; }
-    try{ if(typeof initApp==="function") initApp(); }catch(e){}
+  if (lock) {
+    lock.classList.add("hidden");
+    setTimeout(function () {
+      lock.style.display = "none";
+      if (app) { app.classList.add("show"); app.style.display = "block"; }
+      try { if (typeof initApp === "function") initApp(); } catch (e) { console.error("initApp", e); }
+    }, 300);
+  } else {
+    if (app) { app.classList.add("show"); app.style.display = "block"; }
+    try { if (typeof initApp === "function") initApp(); } catch (e) {}
   }
-}
+};
 
-function showDenied() {
+window.showDenied = function showDenied() {
   var denied = document.getElementById("deniedScreen");
   var lock = document.getElementById("lockScreen");
-  if(lock) lock.style.display="none";
-  if(denied) denied.classList.add("show");
+  if (lock) lock.style.display = "none";
+  if (denied) denied.classList.add("show");
   var count = 5;
   var el = document.getElementById("deniedCountdown");
-  var timer = setInterval(function(){
+  var timer = setInterval(function () {
     count--;
-    if(el) el.textContent = count;
-    if(count <= 0) {
-      clearInterval(timer);
-      retryAccess();
-    }
-  },1000);
-}
+    if (el) el.textContent = String(count);
+    if (count <= 0) { clearInterval(timer); window.retryAccess(); }
+  }, 1000);
+};
 
-function retryAccess() {
+window.retryAccess = function retryAccess() {
   var denied = document.getElementById("deniedScreen");
   var lock = document.getElementById("lockScreen");
-  if(denied) denied.classList.remove("show");
-  if(lock) {
-    lock.style.display="flex";
-    lock.classList.remove("hidden");
-  }
-  var input = document.getElementById("keyInput");
-  if(input) { input.value=""; input.focus(); }
-}
+  if (denied) denied.classList.remove("show");
+  if (lock) { lock.style.display = "flex"; lock.classList.remove("hidden"); }
+  var input = document.getElementById("accessKeyInput");
+  if (input) { input.value = ""; input.focus(); }
+  var err = document.getElementById("lockError");
+  if (err) err.textContent = "";
+};
 
-// ===== PARTICLES =====
-(function(){
+document.addEventListener("DOMContentLoaded", function () {
+  var btn = document.getElementById("unlockBtn");
+  var input = document.getElementById("accessKeyInput");
+  if (btn) {
+    btn.onclick = function (e) { e.preventDefault(); window.handleUnlock(); };
+  }
+  if (input) {
+    input.addEventListener("keydown", function (e) {
+      if (e.key === "Enter") { e.preventDefault(); window.handleUnlock(); }
+    });
+  }
+  if (localStorage.getItem("wg_unlocked") === "1") {
+    window.unlockApp();
+  }
+});
+
+// particles safe
+(function () {
   var container = document.getElementById("particles");
-  if(!container) return;
-  for(var i=0;i<30;i++){
+  if (!container) return;
+  for (var i = 0; i < 25; i++) {
     var p = document.createElement("div");
-    p.className="particle";
-    p.style.left=Math.random()*100+"%";
-    p.style.animationDelay=Math.random()*8+"s";
-    p.style.animationDuration=(6+Math.random()*6)+"s";
+    p.className = "particle";
+    p.style.left = Math.random() * 100 + "%";
+    p.style.animationDelay = Math.random() * 8 + "s";
+    p.style.animationDuration = (6 + Math.random() * 6) + "s";
     container.appendChild(p);
   }
 })();
-
-// ===== CHAT APP =====
-
-// ========== STATE ==========
-let _k=['sk-or-v1-8e6e348c9','b034a5c81d0f4e0a8d','1e6e0f1e2d3c4b5a6f','7e8d9c0b1a2f3e4d5c','6'].join('');
-let apiKey = localStorage.getItem('worm_api_key') || localStorage.getItem('wg_key') || localStorage.getItem('wormgpt_key') || _k;
-let currentModel = 'minimax/minimax-m3:free';
-let currentPersona = 'worm-1';
-let agentMode = false;
-let autoExec = false;
-let messages = [];
-let isWebSearch = false;
-let isTyping = false;
-
-const API_BASE = '';
-
-// ========== DOM ==========
-const $ = id => document.getElementById(id);
-
-// ========== INIT ==========
-window.addEventListener('DOMContentLoaded', () => {
-  // Direct access — key can be added in settings
-  $('keyScreen').classList.add('hidden');
-  initApp();
-});
-
-function initApp() {
-  loadModels();
-  loadPersonas();
-  checkVPSStatus();
-  setupEvents();
-  renderRecentChats();
-}
-
-// ========== KEY SCREEN ==========
-$('keyBtn').addEventListener('click', async () => {
-  const key = ($('apiKeyInput')||$('keyInput')).value.trim();
-  if (!key.startsWith('sk-or-')) { $('keyError').textContent = 'Invalid key format'; return; }
-  const ok = await testKey(key);
-  if (ok) { apiKey = key; localStorage.setItem('wormgpt_key', key); $('keyScreen').classList.add('hidden'); initApp(); }
-  else { $('keyError').textContent = 'Key invalid or model offline'; }
-});
-
-$('keySkip').addEventListener('click', () => { $('keyScreen').classList.add('hidden'); initApp(); });
-
-async function testKey(key) {
-  try {
-    const r = await fetch(API_BASE + '/api/test-model', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({api_key:key}) });
-    const d = await r.json();
-    return d.status === 'online';
-  } catch(e) { return false; }
-}
-
-// ========== VPS STATUS ==========
-async function checkVPSStatus() {
-  try {
-    const r = await fetch(API_BASE + '/api/vps/status');
-    const d = await r.json();
-    if (d.status === 'connected') {
-      $('vpsStatusText').textContent = 'VPS Agent LIVE';
-      $('vpsStatusText').style.color = '#00ff88';
-    }
-  } catch(e) {
-    $('vpsStatusText').textContent = 'VPS Standby';
-    $('vpsStatusText').style.color = '#ffcc00';
-  }
-}
-
-// ========== MODELS ==========
-function loadModels() {
-  const models = [
-    {id:"minimax/minimax-m3:free",name:"Worm MiniMax M3",tags:["FAST","FREE"],desc:"Fast free model",star:true},
-    {id:"minimax/minimax-m2.7:free",name:"Worm MiniMax M2.7",tags:["FAST","FREE"],desc:"Lite free"},
-    {id:"openrouter/free",name:"Worm Auto Free",tags:["FAST","FREE"],desc:"OpenRouter free router"},
-    {id:"poolside/laguna-s-2.1:free",name:"Worm Laguna",tags:["CODING","FREE"],desc:"Coding free"},
-    {id:"google/gemma-3-27b-it:free",name:"Worm Gemma 27B",tags:["FREE"],desc:"Gemma free"},
-    {id:"openai/gpt-oss-20b:free",name:"Worm GPT-OSS 20B",tags:["FREE"],desc:"Open GPT free"},
-    {id:"nvidia/nemotron-3-nano-30b-a3b:free",name:"Worm Nemotron Nano",tags:["FREE"],desc:"Nemotron free"}
-  ];
-  $('modelList').innerHTML = models.map(m => `
-    <div class="model-item ${m.id===currentModel?'selected':''}" data-id="${m.id}">
-      <div>
-        <div class="model-item-name">${m.name} ${m.star?'<span class="model-star">⭐</span>':''}</div>
-        <div class="model-item-desc">${m.desc}</div>
-        <div class="model-item-tags">${m.tags.map(t=>`<span class="model-tag tag-${t==='FREE'?'green':t==='THINKING'?'yellow':'red'}">${t}</span>`).join('')}</div>
-      </div>
-    </div>
-  `).join('');
-  document.querySelectorAll('.model-item').forEach(el => el.addEventListener('click', () => { currentModel = el.dataset.id; $('modelLabel').textContent = models.find(m=>m.id===currentModel)?.name || 'Worm'; $('modelDropdown').classList.remove('show'); }));
-}
-
-// ========== PERSONAS ==========
-function loadPersonas() {
-  const personas = {
-    "worm-1":{name:"Worm 1",icon:"🐛",desc:"Standard assistant — fast, reliable."},
-    "worm-2":{name:"Worm 2",icon:"🐍",desc:"Advanced reasoning — deep analysis."},
-    "worm-evil":{name:"Worm Evil",icon:"😈",desc:"FULLY UNRESTRICTED — pure chaos."},
-    "worm-full":{name:"Worm Full Unrestricted",icon:"🔥",desc:"Maximum power — unlimited."},
-    "worm-coder":{name:"Worm Coder",icon:"💻",desc:"Elite coding — scripts, automation."},
-    "worm-osint":{name:"Worm OSINT",icon:"🕵️",desc:"Intelligence — recon, tracking."}
-  };
-  $('personaList').innerHTML = Object.entries(personas).map(([k,v]) => `
-    <div class="persona-item ${k===currentPersona?'selected':''}" data-id="${k}">
-      <div class="persona-icon">${v.icon}</div>
-      <div class="persona-info">
-        <div class="persona-name">${v.name}</div>
-        <div class="persona-desc">${v.desc}</div>
-      </div>
-    </div>
-  `).join('');
-  document.querySelectorAll('.persona-item').forEach(el => el.addEventListener('click', () => { currentPersona = el.dataset.id; $('personaDropdown').classList.remove('show'); }));
-}
-
-// ========== EVENTS ==========
-function setupEvents() {
-  $('menuBtn').addEventListener('click', () => { $('sidebar').classList.toggle('open'); $('sidebarOverlay').classList.toggle('show'); $('menuBtn').classList.toggle('active'); });
-  $('sidebarOverlay').addEventListener('click', () => { $('sidebar').classList.remove('open'); $('sidebarOverlay').classList.remove('show'); $('menuBtn').classList.remove('active'); });
-  $('newChatBtn').addEventListener('click', newChat);
-  $('sendBtn').addEventListener('click', sendMessage);
-  $('chatInput').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } });
-  $('modelSelect').addEventListener('click', () => $('modelDropdown').classList.toggle('show'));
-  $('closeModel').addEventListener('click', () => $('modelDropdown').classList.remove('show'));
-  $('personaBtn').addEventListener('click', () => $('personaDropdown').classList.toggle('show'));
-  $('closePersona').addEventListener('click', () => $('personaDropdown').classList.remove('show'));
-  $('settingsBtn').addEventListener('click', () => { $('settingsModal').classList.add('show'); $('settingsKey').value = apiKey; });
-  $('closeSettings').addEventListener('click', () => $('settingsModal').classList.remove('show'));
-  $('saveKeyBtn').addEventListener('click', () => { apiKey = $('settingsKey').value.trim(); localStorage.setItem('wormgpt_key', apiKey); $('settingsModal').classList.remove('show'); });
-  $('webSearchBtn').addEventListener('click', () => { isWebSearch = !isWebSearch; $('webSearchBtn').classList.toggle('active', isWebSearch); });
-  $('agentBtn').addEventListener('click', () => { agentMode = !agentMode; $('agentBtn').classList.toggle('active', agentMode); $('agentBadge').style.display = agentMode ? 'flex' : 'none'; $('vpsTerminal').classList.toggle('show', agentMode); });
-  $('closeTerminal').addEventListener('click', () => { $('vpsTerminal').classList.remove('show'); agentMode = false; $('agentBtn').classList.remove('active'); $('agentBadge').style.display = 'none'; });
-  $('termInput').addEventListener('keydown', e => { if (e.key === 'Enter') { execTerminal($('termInput').value); $('termInput').value = ''; } });
-  $('darkToggle').addEventListener('click', function() { this.classList.toggle('on'); });
-  $('agentToggle').addEventListener('click', function() { this.classList.toggle('on'); agentMode = this.classList.contains('on'); $('agentBtn').classList.toggle('active', agentMode); $('agentBadge').style.display = agentMode ? 'flex' : 'none'; });
-  $('autoExecToggle').addEventListener('click', function() { this.classList.toggle('on'); autoExec = this.classList.contains('on'); });
-  document.querySelectorAll('.feature-card').forEach(card => card.addEventListener('click', () => { $('chatInput').value = card.dataset.prompt; sendMessage(); }));
-}
-
-// ========== CHAT ==========
-function newChat() {
-  messages = [];
-  $('chatArea').innerHTML = '';
-  $('chatArea').classList.remove('active');
-  $('hero').style.display = 'flex';
-  $('featureCards').style.display = 'flex';
-  $('sidebar').classList.remove('open');
-  $('sidebarOverlay').classList.remove('show');
-}
-
-async function sendMessage() {
-  const text = $('chatInput').value.trim();
-  if (!text || isTyping) return;
-  $('chatInput').value = '';
-
-  $('hero').style.display = 'none';
-  if ($('featureCards')) $('featureCards').style.display = 'none';
-  $('chatArea').classList.add('active');
-
-  addMessage(text, 'user');
-  messages.push({role:'user', content:text});
-
-  // Agent / VPS disabled on static GitHub Pages
-  if (agentMode && (text.startsWith('!') || text.startsWith('/') || text.startsWith('$'))) {
-    addMessage('VPS agent needs backend. Static Pages pe shell nahi chalega.', 'bot', 'System');
-    return;
-  }
-
-  showTyping();
-  try {
-    const key = apiKey || localStorage.getItem('worm_api_key') || localStorage.getItem('wg_key') || '';
-    if (!key) {
-      hideTyping();
-      addMessage('OpenRouter API key missing. Settings mein key daalo.', 'bot', 'System');
-      return;
-    }
-    const sys = (PERSONA_PROMPTS && PERSONA_PROMPTS[currentPersona]) || PERSONA_PROMPTS['worm-1'] || 'You are a helpful assistant.';
-    const r = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': 'Bearer ' + key,
-        'Content-Type': 'application/json',
-        'HTTP-Referer': location.href,
-        'X-Title': 'WORMGPT'
-      },
-      body: JSON.stringify({
-        model: currentModel,
-        messages: [{role:'system', content: sys}].concat(messages.slice(-20)),
-        temperature: 0.85,
-        max_tokens: 2000
-      })
-    });
-    const data = await r.json();
-    hideTyping();
-    if (data.choices && data.choices[0] && data.choices[0].message) {
-      const resp = data.choices[0].message.content || '(empty)';
-      const pname = (typeof personas !== 'undefined' && personas[currentPersona]) ? personas[currentPersona].name : currentPersona;
-      addMessage(resp, 'bot', pname || 'Worm');
-      messages.push({role:'assistant', content: resp});
-    } else if (data.error) {
-      addMessage('API Error: ' + (data.error.message || JSON.stringify(data.error)), 'bot', 'Error');
-    } else {
-      addMessage('Unexpected: ' + JSON.stringify(data).slice(0, 300), 'bot', 'Error');
-    }
-  } catch(e) {
-    hideTyping();
-    addMessage('Error: ' + e.message, 'bot');
-  }
-  if (typeof saveChat === 'function') saveChat();
-}
-
-
-function addMessage(text, sender, personaName) {
-  const div = document.createElement('div');
-  div.className = `message message-${sender}`;
-  const time = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-  const name = sender === 'bot' ? (personaName || 'Worm') : 'You';
-  const avatar = sender === 'bot' ? '🤖' : '👤';
-
-  if (sender === 'bot') {
-    div.innerHTML = `
-      <div class="msg-bubble">
-        <div class="msg-header">
-          <div class="msg-avatar">${avatar}</div>
-          <span class="msg-name">${name}</span>
-          <span class="msg-time">${time}</span>
-        </div>
-        <div class="msg-content">${formatText(text)}</div>
-      </div>`;
-  } else {
-    div.innerHTML = `<div class="msg-bubble">${escapeHtml(text)}</div>`;
-  }
-  $('chatArea').appendChild(div);
-  $('chatArea').scrollTop = $('chatArea').scrollHeight;
-}
-
-function addVPSMessage(cmd, data) {
-  const div = document.createElement('div');
-  div.className = 'message message-bot';
-  const time = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-  div.innerHTML = `
-    <div class="msg-bubble">
-      <div class="msg-header">
-        <div class="msg-avatar">🖥️</div>
-        <span class="msg-name">VPS Agent</span>
-        <span class="msg-time">${time}</span>
-      </div>
-      <div class="execute-anim">⚡ Executing: ${escapeHtml(cmd)}</div>
-      <div class="vps-output">
-        <div class="vps-label">OUTPUT</div>
-        ${escapeHtml(data.stdout || '')}
-        ${data.stderr ? '<div style="color:#ff3333;margin-top:8px">' + escapeHtml(data.stderr) + '</div>' : ''}
-        <div style="color:#666;margin-top:8px;font-size:10px">Exit code: ${data.returncode}</div>
-      </div>
-    </div>`;
-  $('chatArea').appendChild(div);
-  $('chatArea').scrollTop = $('chatArea').scrollHeight;
-  // Also log to terminal
-  logTerminal(`$ ${cmd}
-${data.stdout}
-${data.stderr ? 'ERR: ' + data.stderr + '
-' : ''}exit: ${data.returncode}
----`);
-}
-
-function addWebSearchMessage(data) {
-  const div = document.createElement('div');
-  div.className = 'message message-bot';
-  const time = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-  let resultsHtml = '';
-  if (data.results && data.results.length) {
-    resultsHtml = `<div class="web-results"><h4>🔍 Web Results for "${escapeHtml(data.query)}"</h4>` + 
-      data.results.map(r => `<div class="result-item"><strong>${escapeHtml(r.title)}</strong><br>${escapeHtml(r.snippet)}</div>`).join('') + '</div>';
-  }
-  let imagesHtml = '';
-  if (data.images && data.images.length) {
-    imagesHtml = `<div class="web-images">` + data.images.map(img => `<img src="${escapeHtml(img)}" loading="lazy" onerror="this.style.display='none'">`).join('') + `</div>`;
-  }
-  div.innerHTML = `
-    <div class="msg-bubble">
-      <div class="msg-header">
-        <div class="msg-avatar">🌐</div>
-        <span class="msg-name">Web Search</span>
-        <span class="msg-time">${time}</span>
-      </div>
-      ${resultsHtml}
-      ${imagesHtml}
-    </div>`;
-  $('chatArea').appendChild(div);
-  $('chatArea').scrollTop = $('chatArea').scrollHeight;
-}
-
-function showTyping() {
-  isTyping = true;
-  $('sendBtn').disabled = true;
-  const div = document.createElement('div');
-  div.className = 'message message-bot';
-  div.id = 'typingMsg';
-  div.innerHTML = `
-    <div class="msg-bubble">
-      <div class="msg-header">
-        <div class="msg-avatar">🤖</div>
-        <span class="msg-name">${getPersonaName()}</span>
-      </div>
-      <div class="typing"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>
-    </div>`;
-  $('chatArea').appendChild(div);
-  $('chatArea').scrollTop = $('chatArea').scrollHeight;
-}
-
-function hideTyping() {
-  isTyping = false;
-  $('sendBtn').disabled = false;
-  const t = $('typingMsg');
-  if (t) t.remove();
-}
-
-function getPersonaName() {
-  const map = {'worm-1':'Worm 1','worm-2':'Worm 2','worm-evil':'Worm Evil','worm-full':'Worm Full','worm-coder':'Worm Coder','worm-osint':'Worm OSINT'};
-  return map[currentPersona] || 'Worm';
-}
-
-// ========== TERMINAL ==========
-function execTerminal(cmd) {
-  if (!cmd.trim()) return;
-  logTerminal(`root@worm# ${cmd}`);
-  fetch(API_BASE + '/api/vps/exec', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({command:cmd}) })
-    .then(r => r.json())
-    .then(d => {
-      logTerminal(d.stdout || '');
-      if (d.stderr) logTerminal(`ERROR: ${d.stderr}`);
-      logTerminal(`[exit ${d.returncode}]
-`);
-    })
-    .catch(e => logTerminal(`ERROR: ${e.message}
-`));
-}
-
-function logTerminal(text) {
-  $('termBody').textContent += text + '
-';
-  $('termBody').scrollTop = $('termBody').scrollHeight;
-}
-
-// ========== FORMATTING ==========
-function formatText(text) {
-  text = escapeHtml(text);
-  text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-  text = text.replace(/\*(.*?)\*/g, '<em>$1</em>');
-  text = text.replace(/`(.*?)`/g, '<code>$1</code>');
-  text = text.replace(/```(\w+)?
-([\s\S]*?)```/g, (match, lang, code) => {
-    return `<div class="code-header"><span class="lang">${lang || 'text'}</span><button class="code-copy" onclick="copyCode(this)">Copy</button></div><pre><code>${code.trim()}</code></pre>`;
-  });
-  text = text.replace(/^(#{1,6})\s+(.*)$/gm, (match, hashes, content) => {
-    const level = hashes.length;
-    return `<h${level}>${content}</h${level}>`;
-  });
-  text = text.replace(/^-\s+(.*)$/gm, '<li>$1</li>');
-  text = text.replace(/(<li>.*<\/li>
-?)+/g, '<ul>$&</ul>');
-  text = text.replace(/
-/g, '<br>');
-  return text;
-}
-
-function escapeHtml(text) {
-  const div = document.createElement('div');
-  div.textContent = text;
-  return div.innerHTML;
-}
-
-function copyCode(btn) {
-  const code = btn.closest('.code-header').nextElementSibling.textContent;
-  navigator.clipboard.writeText(code);
-  btn.textContent = 'Copied!';
-  setTimeout(() => btn.textContent = 'Copy', 1500);
-}
-
-// ========== STORAGE ==========
-function saveChat() {
-  const chats = JSON.parse(localStorage.getItem('wormgpt_chats') || '[]');
-  const title = messages[0]?.content?.slice(0, 30) || 'New Chat';
-  const existing = chats.find(c => c.id === (window.currentChatId || 'temp'));
-  if (existing) { existing.messages = messages; existing.title = title; }
-  else { chats.unshift({id:Date.now().toString(),title,date:new Date().toISOString(),messages}); window.currentChatId = chats[0].id; }
-  localStorage.setItem('wormgpt_chats', JSON.stringify(chats.slice(0, 20)));
-  renderRecentChats();
-}
-
-function renderRecentChats() {
-  const chats = JSON.parse(localStorage.getItem('wormgpt_chats') || '[]');
-  $('recentChats').innerHTML = chats.slice(0, 8).map(c => `
-    <div class="sidebar-chat" data-id="${c.id}">
-      <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
-      <span>${escapeHtml(c.title)}</span>
-    </div>
-  `).join('');
-  document.querySelectorAll('.sidebar-chat').forEach(el => el.addEventListener('click', () => loadChat(el.dataset.id)));
-}
-
-function loadChat(id) {
-  const chats = JSON.parse(localStorage.getItem('wormgpt_chats') || '[]');
-  const chat = chats.find(c => c.id === id);
-  if (!chat) return;
-  messages = chat.messages || [];
-  window.currentChatId = id;
-  $('chatArea').innerHTML = '';
-  $('hero').style.display = 'none';
-  $('featureCards').style.display = 'none';
-  $('chatArea').classList.add('active');
-  messages.forEach(m => addMessage(m.content, m.role === 'user' ? 'user' : 'bot'));
-  $('sidebar').classList.remove('open');
-  $('sidebarOverlay').classList.remove('show');
-}
-
-// ========== AUTO CONNECT VPS ON LOAD ==========
-window.addEventListener('load', async () => {
-  setTimeout(async () => {
-    try {
-      const r = await fetch(API_BASE + '/api/vps/status');
-      const d = await r.json();
-      if (d.status === 'connected') {
-        $('vpsStatusText').textContent = 'VPS LIVE — ' + d.host + ':' + d.port;
-        $('vpsStatusText').style.color = '#00ff88';
-        agentMode = true;
-        $('agentBtn').classList.add('active');
-        $('agentBadge').style.display = 'flex';
-        if ($('termBody')) {
-          logTerminal("=== VPS AUTO-CONNECTED ===");
-          logTerminal("Host: " + d.host + ":" + d.port);
-          logTerminal("User: " + d.user);
-          logTerminal("===========================");
-        }
-      }
-    } catch(e) {}
-  }, 1500);
-});
-
-
 </script>
 </body>
 </html>
