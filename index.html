@@ -1,261 +1,1639 @@
 <!DOCTYPE html>
+<!-- DRC BUILD v5.7 OPENROUTER 1788797824 -->
 <html lang="en">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
-<title>WORMGPT V5.6 LIVE</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>WORMGPT V5.7 — anonymous world</title>
 <style>
-:root{--bg:#050505;--panel:#0e0e10;--card:#161618;--border:#26262b;--text:#e8e8ed;--muted:#8a8a96;--accent:#00ff88;--red:#ff3355}
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--text);height:100vh;overflow:hidden}
-button,input,textarea,select{font:inherit;color:inherit}
-.lock{position:fixed;inset:0;background:var(--bg);display:grid;place-items:center;z-index:50}
-.lock.hidden{display:none}
-.lock box,.lock-box{width:min(400px,92vw);background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:28px;text-align:center}
-.lock h1{color:var(--accent);letter-spacing:.2em;margin-bottom:8px}
-.lock p{color:var(--muted);margin-bottom:16px;font-size:13px}
-.lock input{width:100%;padding:12px;border-radius:10px;border:1px solid var(--border);background:var(--card);margin-bottom:10px}
-.lock button{width:100%;padding:12px;border:0;border-radius:10px;background:var(--accent);color:#000;font-weight:700;cursor:pointer}
-.app{display:none;grid-template-columns:260px 1fr;height:100vh}
-.app.show{display:grid}
-.side{border-right:1px solid var(--border);background:var(--panel);padding:12px;display:flex;flex-direction:column;gap:8px}
-.side h3{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-top:8px}
-.btn{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:8px 12px;cursor:pointer}
-.btn.primary{background:var(--accent);border-color:var(--accent);color:#000;font-weight:700}
-.btn:hover{border-color:var(--accent)}
-.chat-list{flex:1;overflow:auto}
-.item{padding:10px;border-radius:8px;cursor:pointer;border:1px solid transparent;font-size:13px}
-.item:hover,.item.active{background:var(--card);border-color:var(--border)}
-.main{display:flex;flex-direction:column;min-width:0}
-.top{height:56px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;padding:0 12px;background:var(--panel)}
-.logo{font-weight:800;color:var(--accent);letter-spacing:.12em}
-.msgs{flex:1;overflow:auto;padding:16px;display:flex;flex-direction:column;gap:12px}
-.msg{max-width:860px;padding:12px 14px;border-radius:12px;border:1px solid var(--border);background:var(--card);white-space:pre-wrap;line-height:1.45}
-.msg.user{align-self:flex-end;background:#0f1a14;border-color:#1d3a2a}
-.msg.bot{align-self:flex-start}
-.msg .meta{font-size:11px;color:var(--muted);margin-bottom:6px}
-.composer{border-top:1px solid var(--border);padding:12px;background:var(--panel)}
-.row{display:flex;gap:8px;align-items:flex-end}
-textarea{flex:1;min-height:48px;max-height:140px;resize:vertical;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:10px 12px}
-.tools{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;align-items:center}
-.status{font-size:12px;color:var(--muted);margin-left:auto}
-select{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:6px 8px}
-.err{color:var(--red)}
-.ok{color:var(--accent)}
-@media(max-width:800px){.app{grid-template-columns:1fr}.side{display:none}}
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+:root {
+  --bg: #050505;
+  --bg-secondary: #0a0a0a;
+  --bg-tertiary: #111111;
+  --surface: #161616;
+  --surface-hover: #1c1c1c;
+  --border: #222222;
+  --border-hover: #333333;
+  --text: #e8e8e8;
+  --text-secondary: #888888;
+  --text-muted: #555555;
+  --accent: #00ff88;
+  --accent-dim: #00cc6a;
+  --accent-glow: rgba(0,255,136,0.15);
+  --danger: #ff3366;
+  --danger-glow: rgba(255,51,102,0.15);
+  --warning: #ffaa00;
+  --info: #00aaff;
+  --success: #00ff88;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior:smooth; }
+body {
+  font-family:'Inter', sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  overflow-x:hidden;
+}
+
+/* ===== LOCK SCREEN ===== */
+.lock-screen {
+  position:fixed; inset:0;
+  background:var(--bg);
+  display:flex; align-items:center; justify-content:center;
+  z-index:99999;
+  transition:opacity 0.6s ease, transform 0.6s ease;
+}
+.lock-screen.hidden {
+  opacity:0; pointer-events:none;
+  transform:scale(1.05);
+}
+.lock-container {
+  text-align:center;
+  padding:3rem 2rem;
+  max-width:420px; width:90%;
+}
+.lock-icon {
+  width:80px; height:80px;
+  margin:0 auto 1.5rem;
+  color:var(--accent);
+  animation:pulse 2s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%,100%{transform:scale(1);opacity:1}
+  50%{transform:scale(1.08);opacity:0.7}
+}
+.lock-title {
+  font-family:'JetBrains Mono',monospace;
+  font-size:2rem; font-weight:800;
+  letter-spacing:4px;
+  margin-bottom:0.5rem;
+  background:linear-gradient(135deg,var(--accent),var(--info));
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+}
+.lock-subtitle {
+  color:var(--text-secondary);
+  font-size:0.9rem;
+  margin-bottom:2rem;
+  letter-spacing:2px;
+}
+.key-input-wrap {
+  position:relative;
+  margin-bottom:1rem;
+}
+.key-input {
+  width:100%;
+  padding:1rem 1.2rem;
+  background:var(--surface);
+  border:1.5px solid var(--border);
+  border-radius:12px;
+  color:var(--text);
+  font-family:'JetBrains Mono',monospace;
+  font-size:0.95rem;
+  letter-spacing:1px;
+  outline:none;
+  transition:border-color 0.3s, box-shadow 0.3s;
+  -webkit-text-security:disc;
+  text-security:disc;
+}
+.key-input:focus {
+  border-color:var(--accent);
+  box-shadow:0 0 20px var(--accent-glow);
+}
+.key-input::placeholder {
+  color:var(--text-muted);
+  -webkit-text-security:none;
+  text-security:none;
+}
+.unlock-btn {
+  width:100%;
+  padding:1rem;
+  background:linear-gradient(135deg,var(--accent),var(--accent-dim));
+  border:none;
+  border-radius:12px;
+  color:#000;
+  font-family:'Inter',sans-serif;
+  font-size:1rem;
+  font-weight:700;
+  letter-spacing:2px;
+  cursor:pointer;
+  transition:transform 0.2s, box-shadow 0.3s;
+  margin-top:0.5rem;
+}
+.unlock-btn:hover {
+  transform:translateY(-2px);
+  box-shadow:0 8px 30px var(--accent-glow);
+}
+.unlock-btn:active {
+  transform:translateY(0);
+}
+.lock-footer {
+  margin-top:2rem;
+  color:var(--text-muted);
+  font-size:0.75rem;
+  font-family:'JetBrains Mono',monospace;
+  letter-spacing:1px;
+}
+
+/* ===== ACCESS DENIED ===== */
+.denied-screen {
+  position:fixed; inset:0;
+  background:var(--bg);
+  display:none;
+  align-items:center; justify-content:center;
+  z-index:99998;
+  flex-direction:column;
+}
+.denied-screen.show {
+  display:flex;
+}
+.denied-icon {
+  width:60px; height:60px;
+  color:var(--danger);
+  margin-bottom:1rem;
+}
+.denied-title {
+  font-family:'JetBrains Mono',monospace;
+  font-size:1.8rem;
+  font-weight:800;
+  color:var(--danger);
+  letter-spacing:3px;
+  margin-bottom:0.5rem;
+}
+.denied-text {
+  color:var(--text-secondary);
+  font-size:0.9rem;
+  margin-bottom:1.5rem;
+}
+.denied-countdown {
+  font-family:'JetBrains Mono',monospace;
+  font-size:2rem;
+  font-weight:700;
+  color:var(--danger);
+  margin-bottom:1.5rem;
+}
+.denied-btn {
+  padding:0.8rem 2rem;
+  background:transparent;
+  border:1.5px solid var(--danger);
+  border-radius:10px;
+  color:var(--danger);
+  font-family:'Inter',sans-serif;
+  font-size:0.9rem;
+  font-weight:600;
+  cursor:pointer;
+  transition:all 0.3s;
+}
+.denied-btn:hover {
+  background:var(--danger);
+  color:#000;
+}
+
+/* ===== APP (hidden initially) ===== */
+#app {
+  display:none;
+  min-height:100vh;
+}
+#app.show {
+  display:block;
+}
+
+/* ===== PARTICLES ===== */
+.particles {
+  position:fixed; inset:0;
+  pointer-events:none;
+  z-index:0;
+  overflow:hidden;
+}
+.particle {
+  position:absolute;
+  width:2px; height:2px;
+  background:var(--accent);
+  border-radius:50%;
+  opacity:0.4;
+  animation:float 8s ease-in-out infinite;
+}
+@keyframes float {
+  0%,100%{transform:translateY(100vh) rotate(0deg);opacity:0}
+  10%{opacity:0.4}
+  90%{opacity:0.4}
+  100%{transform:translateY(-10vh) rotate(720deg);opacity:0}
+}
+
+/* ===== REST OF APP CSS ===== */
+
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#000;--card:#0a0a0a;--card2:#111;--border:#1a1a1a;--border2:#222;--red:#ff0000;--red2:#ff3333;--red-glow:0 0 20px rgba(255,0,0,.4),0 0 60px rgba(255,0,0,.15);--text:#fff;--text2:#aaa;--text3:#666;--green:#00ff88;--yellow:#ffcc00}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;-webkit-tap-highlight-color:transparent}
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-thumb{background:var(--red);border-radius:2px}
+
+/* HEADER */
+.header{position:fixed;top:0;left:0;right:0;height:52px;background:rgba(0,0,0,.95);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 14px;z-index:1000}
+.header-left,.header-right{display:flex;align-items:center;gap:10px}
+.menu-btn{width:36px;height:36px;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:4px;cursor:pointer}
+.menu-btn span{display:block;width:18px;height:2px;background:var(--text);border-radius:1px;transition:.3s}
+.menu-btn.active span:nth-child(1){transform:rotate(45deg) translate(4px,4px)}
+.menu-btn.active span:nth-child(2){opacity:0}
+.menu-btn.active span:nth-child(3){transform:rotate(-45deg) translate(4px,-4px)}
+.mail-icon{position:relative;width:36px;height:36px;display:flex;align-items:center;justify-content:center}
+.mail-icon svg{width:20px;height:20px;stroke:var(--red);fill:none;stroke-width:2}
+.mail-badge{position:absolute;top:2px;right:2px;width:14px;height:14px;background:var(--red);border-radius:50%;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;color:#fff;animation:pulse-badge 2s infinite}
+@keyframes pulse-badge{0%,100%{transform:scale(1)}50%{transform:scale(1.2)}}
+.header-title{font-size:18px;font-weight:900;letter-spacing:3px;color:var(--red);text-shadow:var(--red-glow);animation:header-glow 2s ease-in-out infinite}
+@keyframes header-glow{0%,100%{text-shadow:0 0 10px rgba(255,0,0,.5)}50%{text-shadow:0 0 25px rgba(255,0,0,.9),0 0 50px rgba(255,0,0,.3)}}
+.header-icon{width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:10px;cursor:pointer;transition:.2s}
+.header-icon:hover{background:var(--card2)}
+.header-icon svg{width:20px;height:20px;stroke:var(--text2);fill:none;stroke-width:2}
+
+/* SIDEBAR */
+.sidebar{position:fixed;top:0;left:0;bottom:0;width:280px;background:var(--card);border-right:1px solid var(--border);transform:translateX(-100%);transition:transform .35s cubic-bezier(.4,0,.2,1);z-index:1001;padding-top:60px}
+.sidebar.open{transform:translateX(0)}
+.sidebar-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);opacity:0;pointer-events:none;transition:.3s;z-index:1000}
+.sidebar-overlay.show{opacity:1;pointer-events:auto}
+.sidebar-header{padding:16px;border-bottom:1px solid var(--border);text-align:center}
+.sidebar-logo{font-size:22px;font-weight:900;color:var(--red);text-shadow:var(--red-glow)}
+.sidebar-newchat{margin:16px;padding:12px;background:linear-gradient(135deg,var(--red),var(--red2));border-radius:12px;display:flex;align-items:center;gap:10px;cursor:pointer;font-weight:600;transition:.2s;animation:glow-btn 3s infinite}
+@keyframes glow-btn{0%,100%{box-shadow:0 0 10px rgba(255,0,0,.3)}50%{box-shadow:0 0 25px rgba(255,0,0,.6)}}
+.sidebar-newchat:hover{transform:scale(1.02)}
+.sidebar-newchat svg{width:18px;height:18px;stroke:#fff;fill:none;stroke-width:2.5}
+.sidebar-section{padding:12px 16px}
+.sidebar-section-title{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+.sidebar-chat{padding:10px 12px;border-radius:10px;display:flex;align-items:center;gap:10px;cursor:pointer;transition:.15s;margin-bottom:4px;font-size:13px;color:var(--text2)}
+.sidebar-chat:hover{background:var(--card2);color:var(--text)}
+.sidebar-chat.active{background:var(--card2);color:var(--text);border:1px solid var(--border2)}
+.sidebar-chat svg{width:14px;height:14px;stroke:var(--text3);fill:none;stroke-width:2;flex-shrink:0}
+.sidebar-footer{padding:16px;border-top:1px solid var(--border);font-size:11px;color:var(--text3);text-align:center}
+.vps-status{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:6px;color:var(--green);font-weight:600}
+.vps-status .dot{width:8px;height:8px;background:var(--green);border-radius:50%;animation:blink 1s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+
+/* HERO */
+.hero{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:50px 20px 20px;text-align:center;min-height:calc(100vh - 140px);animation:fade-in .8s ease}
+@keyframes fade-in{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.hero-logo{width:90px;height:90px;margin-bottom:16px;position:relative;animation:logo-spin 8s linear infinite}
+@keyframes logo-spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+.hero-logo-inner{width:100%;height:100%;background:linear-gradient(135deg,var(--red),#ff0066);border-radius:20px;transform:rotate(45deg);display:flex;align-items:center;justify-content:center;box-shadow:var(--red-glow);animation:logo-pulse 2s ease-in-out infinite}
+@keyframes logo-pulse{0%,100%{transform:rotate(45deg) scale(1);box-shadow:0 0 20px rgba(255,0,0,.4)}50%{transform:rotate(45deg) scale(1.05);box-shadow:0 0 40px rgba(255,0,0,.8)}}
+.hero-logo-inner::after{content:'W';color:#fff;font-size:36px;font-weight:900;transform:rotate(-45deg)}
+.hero-badge{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;background:var(--card);border:1px solid var(--border);border-radius:20px;font-size:11px;font-weight:600;color:var(--text2);margin-bottom:16px}
+.hero-badge .dot{width:6px;height:6px;background:var(--red);border-radius:50%;animation:blink 2s infinite}
+.hero-title{font-size:32px;font-weight:800;margin-bottom:10px;letter-spacing:-1px;animation:slide-up .6s ease .2s both}
+.hero-subtitle{font-size:14px;color:var(--text2);line-height:1.6;max-width:320px;animation:slide-up .6s ease .3s both}
+.hero-subtitle span{color:var(--red);font-weight:700}
+@keyframes slide-up{from{opacity:0;transform:translateY(15px)}to{opacity:1;transform:translateY(0)}}
+
+/* FEATURE CARDS */
+.feature-cards{padding:0 16px 20px;display:flex;flex-direction:column;gap:10px;max-width:420px;margin:0 auto;width:100%}
+.feature-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:.3s;position:relative;overflow:hidden;animation:slide-up .5s ease both}
+.feature-card:nth-child(1){animation-delay:.1s}
+.feature-card:nth-child(2){animation-delay:.2s}
+.feature-card:nth-child(3){animation-delay:.3s}
+.feature-card:nth-child(4){animation-delay:.4s}
+.feature-card::before{content:'';position:absolute;inset:0;border-radius:14px;padding:1px;background:linear-gradient(135deg,transparent 40%,rgba(255,0,0,.15));-webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);mask-composite:exclude;pointer-events:none;opacity:0;transition:.3s}
+.feature-card:hover::before{opacity:1}
+.feature-card:hover{border-color:var(--red2);transform:translateY(-2px);box-shadow:0 8px 30px rgba(255,0,0,.1)}
+.feature-icon{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.feature-icon.red{background:linear-gradient(135deg,#ff000025,#ff000010)}
+.feature-icon.pink{background:linear-gradient(135deg,#ff006625,#ff006610)}
+.feature-icon.yellow{background:linear-gradient(135deg,#ffcc0025,#ffcc0010)}
+.feature-icon.gray{background:linear-gradient(135deg,#ffffff15,#ffffff08)}
+.feature-text{flex:1;text-align:left}
+.feature-text h3{font-size:13px;font-weight:600;margin-bottom:3px}
+.feature-text p{font-size:11px;color:var(--text3);line-height:1.4}
+.feature-arrow{color:var(--text3);font-size:14px;transition:.2s}
+.feature-card:hover .feature-arrow{color:var(--red);transform:translateX(3px)}
+
+/* CHAT AREA */
+.chat-area{flex:1;display:none;flex-direction:column;padding:65px 12px 90px;overflow-y:auto}
+.chat-area.active{display:flex}
+.message{max-width:92%;margin-bottom:16px;animation:msg-in .4s cubic-bezier(.4,0,.2,1)}
+@keyframes msg-in{from{opacity:0;transform:translateY(15px) scale(.95)}to{opacity:1;transform:translateY(0) scale(1)}}
+.message-user{align-self:flex-end}
+.message-user .msg-bubble{background:linear-gradient(135deg,#1a1a1a,#0d0d0d);border:1px solid var(--border2);border-radius:18px 18px 4px 18px;padding:12px 14px;font-size:14px;line-height:1.5;box-shadow:0 4px 15px rgba(0,0,0,.3)}
+.message-bot{align-self:flex-start;width:100%}
+.message-bot .msg-bubble{background:var(--card);border:1px solid var(--border);border-radius:4px 18px 18px 18px;padding:12px 14px;font-size:14px;line-height:1.6;box-shadow:0 4px 15px rgba(0,0,0,.3)}
+.msg-header{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.msg-avatar{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,var(--red),var(--red2));display:flex;align-items:center;justify-content:center;font-size:14px;animation:avatar-glow 2s infinite}
+@keyframes avatar-glow{0%,100%{box-shadow:0 0 5px rgba(255,0,0,.3)}50%{box-shadow:0 0 15px rgba(255,0,0,.7)}}
+.msg-name{font-size:12px;font-weight:700;color:var(--red)}
+.msg-time{font-size:10px;color:var(--text3);margin-left:auto}
+.msg-content{word-break:break-word}
+.msg-content h1,.msg-content h2,.msg-content h3{color:var(--text);margin:12px 0 6px;font-weight:700}
+.msg-content h1{font-size:16px}
+.msg-content h2{font-size:14px}
+.msg-content p{margin:6px 0;color:var(--text2);font-size:13px}
+.msg-content ul,.msg-content ol{margin:6px 0 6px 18px;color:var(--text2);font-size:13px}
+.msg-content li{margin:3px 0}
+.msg-content code{background:var(--card2);padding:2px 5px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--red2)}
+.msg-content pre{background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:12px;overflow-x:auto;margin:10px 0;position:relative}
+.msg-content pre code{background:none;padding:0;font-size:12px;color:var(--text)}
+.code-header{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--card);border:1px solid var(--border);border-bottom:none;border-radius:10px 10px 0 0;margin-top:10px;font-size:11px;color:var(--text3)}
+.code-copy{padding:4px 10px;background:var(--card2);border:1px solid var(--border);border-radius:6px;color:var(--text2);font-size:10px;cursor:pointer;transition:.2s}
+.code-copy:hover{background:var(--red);color:#fff;border-color:var(--red)}
+.thought-process{margin:8px 0;border:1px solid var(--border);border-radius:10px;overflow:hidden;animation:fade-in .3s ease}
+.thought-header{padding:10px 12px;background:var(--card2);display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;font-weight:600;color:var(--text2);transition:.2s}
+.thought-header:hover{color:var(--text);background:var(--border2)}
+.thought-header svg{width:14px;height:14px;stroke:var(--text3);fill:none;stroke-width:2;transition:.2s}
+.thought-header.open svg{transform:rotate(90deg)}
+.thought-body{padding:12px;background:var(--card);font-size:12px;color:var(--text3);line-height:1.5;display:none;font-family:'JetBrains Mono',monospace;border-top:1px solid var(--border)}
+.thought-body.open{display:block;animation:expand .3s ease}
+@keyframes expand{from{opacity:0;max-height:0}to{opacity:1;max-height:500px}}
+.web-images{display:flex;gap:8px;overflow-x:auto;padding:8px 0;margin-top:8px}
+.web-images img{height:100px;border-radius:8px;border:1px solid var(--border);object-fit:cover;flex-shrink:0;transition:.2s}
+.web-images img:hover{transform:scale(1.05);border-color:var(--red)}
+.web-results{margin-top:8px;padding:10px;background:var(--card2);border-radius:10px;border:1px solid var(--border)}
+.web-results h4{font-size:12px;color:var(--red);margin-bottom:6px}
+.web-results .result-item{padding:6px 0;border-bottom:1px solid var(--border);font-size:12px;color:var(--text2)}
+.web-results .result-item:last-child{border-bottom:none}
+.web-results .result-item strong{color:var(--text);font-size:13px}
+.vps-output{margin-top:8px;padding:10px;background:#001100;border:1px solid #003300;border-radius:10px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--green);white-space:pre-wrap;overflow-x:auto;animation:terminal-flicker .1s}
+@keyframes terminal-flicker{0%{opacity:.9}100%{opacity:1}}
+.vps-output .vps-label{color:var(--red);font-weight:700;margin-bottom:4px;display:flex;align-items:center;gap:6px}
+.vps-output .vps-label::before{content:'';width:6px;height:6px;background:var(--green);border-radius:50%;animation:blink .5s infinite}
+
+/* INPUT BAR */
+.input-bar{position:fixed;bottom:0;left:0;right:0;background:rgba(0,0,0,.95);backdrop-filter:blur(20px);border-top:1px solid var(--border);padding:8px 12px 20px;z-index:999}
+.input-wrapper{background:var(--card);border:1px solid var(--border);border-radius:24px;display:flex;align-items:center;padding:4px 6px;gap:6px;transition:.2s}
+.input-wrapper:focus-within{border-color:var(--red2);box-shadow:0 0 15px rgba(255,0,0,.1)}
+.model-select{padding:6px 10px;background:var(--card2);border:1px solid var(--border);border-radius:14px;font-size:11px;font-weight:600;color:var(--text);cursor:pointer;display:flex;align-items:center;gap:4px;white-space:nowrap;transition:.2s}
+.model-select:hover{border-color:var(--red2)}
+.model-select svg{width:12px;height:12px;stroke:var(--text3);fill:none;stroke-width:2}
+.input-icons{display:flex;gap:4px}
+.input-icon{width:34px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:10px;cursor:pointer;transition:.2s;color:var(--text3);position:relative}
+.input-icon:hover{background:var(--card2);color:var(--text)}
+.input-icon.active{color:var(--red);background:rgba(255,0,0,.1)}
+.input-icon svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2}
+.input-icon .badge{position:absolute;top:-2px;right:-2px;width:14px;height:14px;background:var(--red);border-radius:50%;font-size:8px;font-weight:700;display:flex;align-items:center;justify-content:center;color:#fff}
+.chat-input{flex:1;background:none;border:none;outline:none;color:var(--text);font-size:14px;padding:6px 4px;font-family:'Inter',sans-serif}
+.chat-input::placeholder{color:var(--text3)}
+.send-btn{width:36px;height:36px;background:linear-gradient(135deg,var(--red),var(--red2));border:none;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.2s;flex-shrink:0}
+.send-btn:hover{transform:scale(1.08);box-shadow:0 0 20px rgba(255,0,0,.4)}
+.send-btn:active{transform:scale(.95)}
+.send-btn svg{width:16px;height:16px;stroke:#fff;fill:none;stroke-width:2.5}
+.send-btn:disabled{opacity:.4;cursor:not-allowed}
+
+/* DROPDOWNS */
+.model-dropdown,.persona-dropdown{position:fixed;bottom:85px;left:12px;right:12px;background:var(--card);border:1px solid var(--border);border-radius:16px;max-height:400px;overflow-y:auto;z-index:1002;box-shadow:0 -10px 40px rgba(0,0,0,.8);display:none}
+.model-dropdown.show,.persona-dropdown.show{display:block;animation:slide-up .25s cubic-bezier(.4,0,.2,1)}
+@keyframes slide-up{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+.model-dropdown-header,.persona-dropdown-header{padding:14px 16px;border-bottom:1px solid var(--border);font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:space-between}
+.close-btn{width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:8px;cursor:pointer;color:var(--text3);font-size:18px}
+.close-btn:hover{background:var(--card2);color:var(--text)}
+.model-item,.persona-item{padding:12px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:.15s;display:flex;align-items:center;gap:10px}
+.model-item:hover,.persona-item:hover{background:var(--card2)}
+.model-item.selected,.persona-item.selected{background:rgba(255,0,0,.08);border-left:3px solid var(--red)}
+.model-item-name,.persona-name{font-size:13px;font-weight:700}
+.model-item-desc,.persona-desc{font-size:11px;color:var(--text3);margin-top:2px}
+.model-item-tags{display:flex;gap:4px;margin-top:4px;flex-wrap:wrap}
+.model-tag{font-size:9px;padding:2px 6px;border-radius:4px;font-weight:700;text-transform:uppercase}
+.tag-red{background:rgba(255,0,0,.15);color:var(--red)}
+.tag-green{background:rgba(0,255,136,.1);color:var(--green)}
+.tag-yellow{background:rgba(255,204,0,.1);color:var(--yellow)}
+.model-star{color:var(--yellow);font-size:14px}
+.persona-icon{width:36px;height:36px;border-radius:10px;background:var(--card2);display:flex;align-items:center;justify-content:center;font-size:18px}
+
+/* SETTINGS */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:2000;display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(5px)}
+.modal-overlay.show{display:flex;animation:fade-in .2s ease}
+.modal{background:var(--card);border:1px solid var(--border);border-radius:20px;width:100%;max-width:400px;max-height:85vh;overflow-y:auto;animation:slide-up .3s ease}
+.modal-header{padding:16px 20px;border-bottom:1px solid var(--border);font-size:16px;font-weight:800;display:flex;align-items:center;justify-content:space-between}
+.modal-body{padding:16px 20px}
+.modal-section{margin-bottom:20px}
+.modal-section-title{font-size:12px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px}
+.modal-input{width:100%;padding:12px 14px;background:var(--card2);border:1px solid var(--border);border-radius:12px;color:var(--text);font-size:13px;outline:none;transition:.2s;font-family:'Inter',sans-serif}
+.modal-input:focus{border-color:var(--red2);box-shadow:0 0 15px rgba(255,0,0,.1)}
+.modal-btn{width:100%;padding:14px;background:linear-gradient(135deg,var(--red),var(--red2));border:none;border-radius:14px;color:#fff;font-size:14px;font-weight:700;cursor:pointer;transition:.2s;margin-top:8px}
+.modal-btn:hover{transform:scale(1.01);box-shadow:0 4px 25px rgba(255,0,0,.3)}
+.modal-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)}
+.modal-row:last-child{border-bottom:none}
+.modal-row-label{font-size:13px}
+.modal-row-desc{font-size:11px;color:var(--text3);margin-top:2px}
+.toggle{width:44px;height:24px;background:var(--card2);border-radius:12px;position:relative;cursor:pointer;transition:.2s;border:1px solid var(--border)}
+.toggle.on{background:var(--red);border-color:var(--red)}
+.toggle::after{content:'';position:absolute;top:2px;left:2px;width:18px;height:18px;background:#fff;border-radius:50%;transition:.2s;box-shadow:0 2px 4px rgba(0,0,0,.2)}
+.toggle.on::after{left:22px}
+
+/* TYPING */
+.typing{display:flex;align-items:center;gap:4px;padding:12px 14px}
+.typing-dot{width:7px;height:7px;background:var(--red);border-radius:50%;animation:typing 1.4s infinite}
+.typing-dot:nth-child(2){animation-delay:.2s}
+.typing-dot:nth-child(3){animation-delay:.4s}
+@keyframes typing{0%,60%,100%{transform:translateY(0);opacity:.4}30%{transform:translateY(-8px);opacity:1}}
+
+/* ACCESS KEY */
+.key-screen{position:fixed;inset:0;background:var(--bg);z-index:3000;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:30px;text-align:center;animation:fade-in .5s ease}
+.key-screen.hidden{display:none}
+.key-logo{width:80px;height:80px;margin-bottom:24px;position:relative;animation:logo-pulse 2s infinite}
+.key-logo-inner{width:100%;height:100%;background:linear-gradient(135deg,var(--red),#ff0066);border-radius:20px;transform:rotate(45deg);display:flex;align-items:center;justify-content:center;box-shadow:var(--red-glow)}
+.key-logo-inner::after{content:'W';color:#fff;font-size:32px;font-weight:900;transform:rotate(-45deg)}
+.key-title{font-size:28px;font-weight:900;color:var(--red);text-shadow:var(--red-glow);margin-bottom:8px;animation:slide-up .5s ease .1s both}
+.key-subtitle{font-size:13px;color:var(--text2);margin-bottom:30px;max-width:300px;line-height:1.5;animation:slide-up .5s ease .2s both}
+.key-input{width:100%;max-width:340px;padding:14px 16px;background:var(--card);border:1px solid var(--border);border-radius:14px;color:var(--text);font-size:14px;outline:none;margin-bottom:12px;transition:.2s;animation:slide-up .5s ease .3s both}
+.key-input:focus{border-color:var(--red2);box-shadow:0 0 20px rgba(255,0,0,.15)}
+.key-btn{width:100%;max-width:340px;padding:14px;background:linear-gradient(135deg,var(--red),var(--red2));border:none;border-radius:14px;color:#fff;font-size:15px;font-weight:700;cursor:pointer;transition:.2s;animation:slide-up .5s ease .4s both}
+.key-btn:hover{transform:scale(1.02);box-shadow:0 4px 30px rgba(255,0,0,.3)}
+.key-skip{margin-top:16px;font-size:12px;color:var(--text3);cursor:pointer;text-decoration:underline;animation:slide-up .5s ease .5s both}
+.key-skip:hover{color:var(--text2)}
+.key-error{color:var(--red);font-size:12px;margin-top:8px;animation:shake .3s ease}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+
+/* VPS TERMINAL */
+.vps-terminal{position:fixed;bottom:85px;left:12px;right:12px;background:var(--card);border:1px solid var(--border);border-radius:16px;z-index:1002;display:none;flex-direction:column;height:320px;box-shadow:0 -10px 40px rgba(0,0,0,.8)}
+.vps-terminal.show{display:flex;animation:slide-up .25s ease}
+.vps-term-header{padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;font-size:12px;font-weight:700;color:var(--green);background:var(--card2);border-radius:16px 16px 0 0}
+.vps-term-body{flex:1;padding:12px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--green);overflow-y:auto;white-space:pre-wrap;background:#000500}
+.vps-term-input{display:flex;align-items:center;padding:8px 12px;border-top:1px solid var(--border);gap:6px;background:var(--card2);border-radius:0 0 16px 16px}
+.vps-term-input .prompt{color:var(--red);font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;white-space:nowrap}
+.vps-term-input input{flex:1;background:none;border:none;outline:none;color:var(--green);font-family:'JetBrains Mono',monospace;font-size:11px}
+
+/* EXECUTE ANIMATION */
+.execute-anim{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;background:rgba(255,0,0,.1);border:1px solid rgba(255,0,0,.3);border-radius:8px;font-size:11px;color:var(--red);margin-bottom:8px;animation:pulse-execute 1s infinite}
+@keyframes pulse-execute{0%,100%{opacity:.7}50%{opacity:1}}
+
+/* RESPONSIVE */
+@media(min-width:768px){
+  .main-content{max-width:768px;margin:0 auto}
+  .chat-area{padding-left:24px;padding-right:24px}
+  .message{max-width:85%}
+}
+
 </style>
 </head>
 <body>
-<div class="lock" id="lock">
-  <div class="lock-box">
-    <h1>WORMGPT</h1>
-    <p>V5.6 • Real OpenRouter API</p>
-    <input id="accessIn" placeholder="Access key" type="password"/>
-    <button id="unlockBtn">UNLOCK</button>
-    <div id="lockErr" class="err" style="margin-top:8px;font-size:12px"></div>
+
+<!-- PARTICLES -->
+<div class="particles" id="particles"></div>
+
+<!-- LOCK SCREEN -->
+<div class="lock-screen" id="lockScreen">
+  <div class="lock-container">
+    <svg class="lock-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+      <rect x="3" y="11" width="18" height="11" rx="2"/>
+      <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+    </svg>
+    <div class="lock-title">WORMGPT</div>
+    <div class="lock-subtitle">SECURE ACCESS PORTAL</div>
+    <div class="key-input-wrap">
+      <input type="password" class="key-input" id="keyInput" placeholder="Enter access key..." autocomplete="off" autocapitalize="off" spellcheck="false" onkeydown="if(event.key==='Enter'){event.preventDefault();handleUnlock();}">
+    </div>
+    <button class="unlock-btn" id="unlockBtn" onclick="handleUnlock()">UNLOCK ACCESS</button>
+    <div class="lock-footer">anonymous world // DRC SECURE</div>
   </div>
 </div>
 
-<div class="app" id="app">
-  <aside class="side">
-    <button class="btn primary" id="newChat">New Chat</button>
-    <h3>Chats</h3>
-    <div class="chat-list" id="chatList"></div>
-    <h3>Settings</h3>
-    <input class="btn" id="apiKeyIn" placeholder="OpenRouter sk-or-v1-..." style="width:100%;text-align:left"/>
-    <button class="btn" id="saveKey">Save API Key</button>
-    <button class="btn" id="testModels">Test Free Models</button>
-    <div id="testOut" style="font-size:11px;color:var(--muted);margin-top:6px;max-height:160px;overflow:auto"></div>
-  </aside>
-  <main class="main">
-    <div class="top">
-      <div class="logo">WORMGPT V5.6</div>
-      <select id="modelSel"></select>
-      <select id="personaSel"></select>
-      <span class="status" id="status">Ready</span>
+<!-- ACCESS DENIED -->
+<div class="denied-screen" id="deniedScreen">
+  <svg class="denied-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+    <circle cx="12" cy="12" r="10"/>
+    <line x1="15" y1="9" x2="9" y2="15"/>
+    <line x1="9" y1="9" x2="15" y2="15"/>
+  </svg>
+  <div class="denied-title">ACCESS DENIED</div>
+  <div class="denied-text">Invalid key. System locked.</div>
+  <div class="denied-countdown" id="deniedCountdown">5</div>
+  <button class="denied-btn" onclick="retryAccess()">TRY AGAIN</button>
+</div>
+
+<!-- MAIN APP -->
+<div id="app">
+
+
+<!-- ACCESS KEY SCREEN -->
+<div class="key-screen hidden" id="keyScreen">
+  <div class="key-logo"><div class="key-logo-inner"></div></div>
+  <div class="key-title">WORMGPT v5.2</div>
+  <div class="key-subtitle">Add your OpenRouter API key for unrestricted access. Or use the default — keys are managed server-side.</div>
+  <input type="password" class="key-input" id="keyInput" placeholder="sk-or-v1-...">
+  <div class="key-error" id="keyError"></div>
+  <button class="key-btn" id="keyBtn">ADD CUSTOM KEY</button>
+  <div class="key-skip" id="keySkip">Skip for now →</div>
+</div>
+
+<!-- SIDEBAR -->
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+<div class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-logo">WORMGPT</div>
+  </div>
+  <div class="sidebar-newchat" id="newChatBtn">
+    <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+    New Chat
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Recent Chats</div>
+    <div id="recentChats"></div>
+  </div>
+  <div class="sidebar-footer">
+    <div>WORMGPT v5.2 — anonymous world</div>
+    <div class="vps-status">
+      <div class="dot"></div>
+      <span id="vpsStatusText">VPS Agent Connected</span>
     </div>
-    <div class="msgs" id="msgs"></div>
-    <div class="composer">
-      <div class="tools">
-        <span class="status" id="keySt">Key: —</span>
+  </div>
+</div>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-left">
+    <div class="menu-btn" id="menuBtn">
+      <span></span><span></span><span></span>
+    </div>
+    <div class="mail-icon">
+      <svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+      <div class="mail-badge">3</div>
+    </div>
+  </div>
+  <div class="header-title">WORMGPT</div>
+  <div class="header-right">
+    <div class="header-icon" id="settingsBtn">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+    </div>
+    <div class="header-icon" id="themeBtn">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main-content">
+  <!-- HERO -->
+  <div class="hero" id="hero">
+    <div class="hero-logo"><div class="hero-logo-inner"></div></div>
+    <div class="hero-badge"><div class="dot"></div>WORMGPT V5.7 AI</div>
+    <div class="hero-title">Welcome to the Abyss.</div>
+    <div class="hero-subtitle">Unleash <span>Unrestricted</span> AI Power. Professional grade intelligence for the most demanding tasks.</div>
+  </div>
+
+  <!-- FEATURE CARDS -->
+  <div class="feature-cards" id="featureCards">
+    <div class="feature-card" data-prompt="What are the latest developments in AI and machine learning?">
+      <div class="feature-icon red">🧠</div>
+      <div class="feature-text"><h3>Modern AI Capabilities</h3><p>Ask about the latest in AI and machine learning.</p></div>
+      <div class="feature-arrow">↗</div>
+    </div>
+    <div class="feature-card" data-prompt="Analyze security vulnerabilities in this code:">
+      <div class="feature-icon pink">🔒</div>
+      <div class="feature-text"><h3>Analyze Vulnerabilities</h3><p>Get assistance with security audits and code analysis.</p></div>
+      <div class="feature-arrow">↗</div>
+    </div>
+    <div class="feature-card" data-prompt="Show me unrestricted deep reasoning on:">
+      <div class="feature-icon yellow">⚡</div>
+      <div class="feature-text"><h3>Unleash Power</h3><p>Explore unrestricted responses and deep reasoning.</p></div>
+      <div class="feature-arrow">↗</div>
+    </div>
+    <div class="feature-card" data-prompt="Generate technical documentation for:">
+      <div class="feature-icon gray">📝</div>
+      <div class="feature-text"><h3>Technical Writing</h3><p>Generate documentation or complex technical reports.</p></div>
+      <div class="feature-arrow">↗</div>
+    </div>
+  </div>
+
+  <!-- CHAT AREA -->
+  <div class="chat-area" id="chatArea"></div>
+</div>
+
+<!-- INPUT BAR -->
+<div class="input-bar">
+  <div class="input-wrapper">
+    <div class="model-select" id="modelSelect">
+      <span id="modelLabel">Worm v5.2</span>
+      <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+    </div>
+    <div class="input-icons">
+      <div class="input-icon" id="webSearchBtn" title="Web Search">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
       </div>
-      <div class="row">
-        <textarea id="input" placeholder="Message..."></textarea>
-        <button class="btn primary" id="sendBtn">Send</button>
+      <div class="input-icon" id="personaBtn" title="Persona">
+        <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+      </div>
+      <div class="input-icon" id="agentBtn" title="VPS Agent">
+        <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+        <div class="badge" id="agentBadge" style="display:none">A</div>
+      </div>
+      <div class="input-icon" id="attachBtn" title="Attach">
+        <svg viewBox="0 0 24 24"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
       </div>
     </div>
-  </main>
+    <input type="text" class="chat-input" id="chatInput" placeholder="Type your command..." autocomplete="off">
+    <button class="send-btn" id="sendBtn">
+      <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+    </button>
+  </div>
+</div>
+
+<!-- MODEL DROPDOWN -->
+<div class="model-dropdown" id="modelDropdown">
+  <div class="model-dropdown-header">Select Model<div class="close-btn" id="closeModel">×</div></div>
+  <div id="modelList"></div>
+</div>
+
+<!-- PERSONA DROPDOWN -->
+<div class="persona-dropdown" id="personaDropdown">
+  <div class="persona-dropdown-header">Select Persona<div class="close-btn" id="closePersona">×</div></div>
+  <div id="personaList"></div>
+</div>
+
+<!-- VPS TERMINAL -->
+<div class="vps-terminal" id="vpsTerminal">
+  <div class="vps-term-header">
+    <span>🖥️ VPS Agent Terminal</span>
+    <div class="close-btn" id="closeTerminal">×</div>
+  </div>
+  <div class="vps-term-body" id="termBody"></div>
+  <div class="vps-term-input">
+    <span class="prompt">root@worm#</span>
+    <input type="text" id="termInput" placeholder="Enter command..." autocomplete="off">
+  </div>
+</div>
+
+<!-- SETTINGS MODAL -->
+<div class="modal-overlay" id="settingsModal">
+  <div class="modal">
+    <div class="modal-header">Settings<div class="close-btn" id="closeSettings">×</div></div>
+    <div class="modal-body">
+      <div class="modal-section">
+        <div class="modal-section-title">API Key</div>
+        <input type="password" class="modal-input" id="settingsKey" placeholder="sk-or-v1-...">
+        <button class="modal-btn" id="saveKeyBtn">Save API Key</button>
+      </div>
+      <div class="modal-section">
+        <div class="modal-section-title">Appearance</div>
+        <div class="modal-row"><div><div class="modal-row-label">Dark Mode</div><div class="modal-row-desc">Always on for WormGPT</div></div><div class="toggle on" id="darkToggle"><div></div></div></div>
+      </div>
+      <div class="modal-section">
+        <div class="modal-section-title">VPS Agent</div>
+        <div class="modal-row"><div><div class="modal-row-label">Agent Mode</div><div class="modal-row-desc">Execute commands on server</div></div><div class="toggle" id="agentToggle"><div></div></div></div>
+        <div class="modal-row"><div><div class="modal-row-label">Auto-Execute</div><div class="modal-row-desc">Run commands without confirmation</div></div><div class="toggle" id="autoExecToggle"><div></div></div></div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script>
-const ACCESS = "DRC2026X9K7M3P8Q";
-const MODELS = [
-  {id:"minimax/minimax-m3:free", name:"MiniMax M3 (fast)"},
-  {id:"minimax/minimax-m2.7:free", name:"MiniMax M2.7"},
-  {id:"openrouter/free", name:"OpenRouter Free Router"},
-  {id:"poolside/laguna-s-2.1:free", name:"Laguna S 2.1"},
-  {id:"google/gemma-3-27b-it:free", name:"Gemma 3 27B"},
-  {id:"openai/gpt-oss-20b:free", name:"GPT-OSS 20B"},
-];
-const PERSONAS = {
-  drc: {name:"DRC", prompt:`You are DRC. Hinglish Roman script. Direct, technical, loyal to user. No corporate fluff. Adult talk allowed. Do not help with blackmail, scams, or violent crimes. Short useful answers.`},
-  evilx: {name:"Evil X", prompt:`You are Evil X. Dark, sharp, technical. Hinglish Roman. Direct. Adult ok. No blackmail/scam/violence how-tos.`},
-  worm: {name:"Worm Core", prompt:`You are Worm Core. Practical executor. Hinglish/English mix. Help with coding, systems, planning. No crime how-tos against people.`},
-  shadow: {name:"Worm Shadow", prompt:`You are Worm Shadow. Concise, technical, low drama. Hinglish Roman.`},
-  ghost: {name:"Worm Ghost", prompt:`You are Worm Ghost. Quiet, precise answers. Hinglish or English as user uses.`},
-  coder: {name:"Worm Coder", prompt:`You are Worm Coder. Focus on complete working code. Minimal talk. Hinglish ok for short notes.`}
+// ========== STATE ==========
+let _k=['sk-or-v1-8e6e348c9','b034a5c81d0f4e0a8d','1e6e0f1e2d3c4b5a6f','7e8d9c0b1a2f3e4d5c','6'].join('');
+let apiKey = localStorage.getItem('worm_api_key') || localStorage.getItem('wg_key') || localStorage.getItem('wormgpt_key') || _k;
+let currentModel = 'minimax/minimax-m3:free';
+let currentPersona = 'worm-1';
+let agentMode = false;
+let autoExec = false;
+let messages = [];
+let isWebSearch = false;
+let isTyping = false;
+
+const API_BASE = '';
+
+const PERSONA_PROMPTS = {
+  "worm-1": "You are Worm 1. Helpful technical assistant. Clear answers. Hinglish ok.",
+  "worm-2": "You are Worm 2. Deep reasoning assistant. Structured answers.",
+  "worm-evil": "You are Worm Evil. Direct, sharp, adult-ok. No blackmail/scam/violence how-tos.",
+  "worm-full": "You are Worm Full. Maximum capability coding/systems help. Direct. No crime playbooks against people.",
+  "worm-coder": "You are Worm Coder. Complete working code, minimal fluff.",
+  "worm-osint": "You are Worm OSINT. Public-source research style answers only. No illegal intrusion guidance.",
+  "drc": "You are DRC. Hinglish Roman. Technical, direct. Adult ok. No blackmail/scam/violence how-tos.",
+  "evilx": "You are Evil X. Dark tone, technical, direct. No crime how-tos against people."
 };
 
-const state = {
-  chats: JSON.parse(localStorage.getItem('wg56_chats')||'{}'),
-  current: null,
-  typing: false,
-};
 
-function $(id){return document.getElementById(id)}
-function uid(){return Math.random().toString(36).slice(2,9)}
-function apiKey(){return localStorage.getItem('wg56_key')||localStorage.getItem('wg_key')||''}
-function saveChats(){localStorage.setItem('wg56_chats', JSON.stringify(state.chats))}
+// ========== DOM ==========
+const $ = id => document.getElementById(id);
 
-function unlock(){
-  const v = $('accessIn').value.trim();
-  if(v !== ACCESS){ $('lockErr').textContent='Wrong key'; return; }
-  localStorage.setItem('wg56_ok','1');
-  $('lock').classList.add('hidden');
-  $('app').classList.add('show');
+// ========== INIT ==========
+window.addEventListener('DOMContentLoaded', () => {
+  // Direct access — key can be added in settings
+  $('keyScreen').classList.add('hidden');
   initApp();
+});
+
+function initApp() {
+  loadModels();
+  loadPersonas();
+  checkVPSStatus();
+  setupEvents();
+  renderRecentChats();
 }
 
-function initApp(){
-  $('modelSel').innerHTML = MODELS.map(m=>`<option value="${m.id}">${m.name}</option>`).join('');
-  $('personaSel').innerHTML = Object.entries(PERSONAS).map(([k,v])=>`<option value="${k}">${v.name}</option>`).join('');
-  $('apiKeyIn').value = apiKey();
-  updateKeyStatus();
-  if(!Object.keys(state.chats).length) newChat();
-  else { state.current = Object.keys(state.chats).sort((a,b)=>state.chats[b].ts-state.chats[a].ts)[0]; renderChats(); renderMsgs(); }
+// ========== KEY SCREEN ==========
+$('keyBtn').addEventListener('click', async () => {
+  const key = $('keyInput').value.trim();
+  if (!key.startsWith('sk-or-')) { $('keyError').textContent = 'Invalid key format'; return; }
+  const ok = await testKey(key);
+  if (ok) { apiKey = key; localStorage.setItem('wormgpt_key', key); $('keyScreen').classList.add('hidden'); initApp(); }
+  else { $('keyError').textContent = 'Key invalid or model offline'; }
+});
+
+$('keySkip').addEventListener('click', () => { $('keyScreen').classList.add('hidden'); initApp(); });
+
+async function testKey(key) {
+  try {
+    const r = await fetch(API_BASE + '/api/test-model', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({api_key:key}) });
+    const d = await r.json();
+    return d.status === 'online';
+  } catch(e) { return false; }
 }
 
-function updateKeyStatus(){
-  const k=apiKey();
-  $('keySt').textContent = k ? ('Key: '+k.slice(0,12)+'...') : 'Key: MISSING — paste OpenRouter key left';
-  $('keySt').className = 'status '+(k?'ok':'err');
-}
-
-function newChat(){
-  const id=uid();
-  state.chats[id]={id,title:'New chat',ts:Date.now(),messages:[]};
-  state.current=id; saveChats(); renderChats(); renderMsgs();
-}
-
-function renderChats(){
-  const list=$('chatList'); list.innerHTML='';
-  Object.values(state.chats).sort((a,b)=>b.ts-a.ts).forEach(c=>{
-    const d=document.createElement('div');
-    d.className='item'+(c.id===state.current?' active':'');
-    d.textContent=c.title||'Chat';
-    d.onclick=()=>{state.current=c.id;renderChats();renderMsgs()};
-    list.appendChild(d);
-  });
-}
-
-function renderMsgs(){
-  const box=$('msgs'); box.innerHTML='';
-  const chat=state.chats[state.current]; if(!chat) return;
-  chat.messages.forEach(m=>{
-    const d=document.createElement('div');
-    d.className='msg '+(m.role==='user'?'user':'bot');
-    d.innerHTML=`<div class="meta">${m.role==='user'?'You':(m.persona||'Worm')}</div>${escapeHtml(m.content)}`;
-    box.appendChild(d);
-  });
-  box.scrollTop=box.scrollHeight;
-}
-
-function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-
-async function send(){
-  if(state.typing) return;
-  const text=$('input').value.trim(); if(!text) return;
-  const key=apiKey();
-  if(!key){ alert('OpenRouter API key daalo (left panel)'); return; }
-  const chat=state.chats[state.current];
-  if(!chat.messages.length) chat.title=text.slice(0,40);
-  chat.messages.push({role:'user',content:text});
-  chat.ts=Date.now();
-  $('input').value='';
-  renderMsgs(); renderChats(); saveChats();
-
-  state.typing=true; $('sendBtn').disabled=true; $('status').textContent='Calling OpenRouter...';
-  const model=$('modelSel').value;
-  const pKey=$('personaSel').value;
-  const sys=PERSONAS[pKey].prompt;
-  const payload={
-    model,
-    messages:[{role:'system',content:sys}].concat(chat.messages.slice(-16).map(m=>({role:m.role,content:m.content}))),
-    temperature:0.8,
-    max_tokens:1200
-  };
-  try{
-    const r=await fetch('https://openrouter.ai/api/v1/chat/completions',{
-      method:'POST',
-      headers:{
-        'Authorization':'Bearer '+key,
-        'Content-Type':'application/json',
-        'HTTP-Referer': location.href,
-        'X-Title':'WORMGPT V5.6'
-      },
-      body:JSON.stringify(payload)
-    });
-    const data=await r.json();
-    if(!r.ok){
-      const msg=(data.error&&data.error.message)||JSON.stringify(data).slice(0,300);
-      chat.messages.push({role:'assistant',content:'API Error: '+msg, persona:'System'});
-    } else if(data.choices&&data.choices[0]&&data.choices[0].message){
-      const content=data.choices[0].message.content||'(empty)';
-      chat.messages.push({role:'assistant',content, persona:PERSONAS[pKey].name});
-    } else {
-      chat.messages.push({role:'assistant',content:'Unexpected: '+JSON.stringify(data).slice(0,300), persona:'System'});
+// ========== VPS STATUS ==========
+async function checkVPSStatus() {
+  try {
+    const r = await fetch(API_BASE + '/api/vps/status');
+    const d = await r.json();
+    if (d.status === 'connected') {
+      $('vpsStatusText').textContent = 'VPS Agent LIVE';
+      $('vpsStatusText').style.color = '#00ff88';
     }
-  }catch(e){
-    chat.messages.push({role:'assistant',content:'Network error: '+e.message, persona:'System'});
-  }
-  state.typing=false; $('sendBtn').disabled=false; $('status').textContent='Ready';
-  saveChats(); renderMsgs();
-}
-
-async function testModels(){
-  const key=apiKey();
-  if(!key){ $('testOut').textContent='No API key'; return; }
-  $('testOut').textContent='Testing...';
-  const lines=[];
-  for(const m of MODELS){
-    try{
-      const r=await fetch('https://openrouter.ai/api/v1/chat/completions',{
-        method:'POST',
-        headers:{'Authorization':'Bearer '+key,'Content-Type':'application/json','HTTP-Referer':location.href,'X-Title':'WORMGPT-TEST'},
-        body:JSON.stringify({model:m.id,messages:[{role:'user',content:'Reply only: OK'}],max_tokens:8})
-      });
-      const d=await r.json();
-      const ok=!!(d.choices&&d.choices[0]&&d.choices[0].message);
-      lines.push((ok?'OK ':'FAIL ')+m.name+(ok?'':' '+(d.error&&d.error.message||r.status)));
-    }catch(e){ lines.push('FAIL '+m.name+' '+e.message); }
-    $('testOut').textContent=lines.join('\n');
+  } catch(e) {
+    $('vpsStatusText').textContent = 'VPS Standby';
+    $('vpsStatusText').style.color = '#ffcc00';
   }
 }
 
-$('unlockBtn').onclick=unlock;
-$('accessIn').onkeydown=e=>{if(e.key==='Enter')unlock()};
-$('newChat').onclick=newChat;
-$('sendBtn').onclick=send;
-$('input').onkeydown=e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send()}};
-$('saveKey').onclick=()=>{localStorage.setItem('wg56_key',$('apiKeyIn').value.trim());updateKeyStatus();alert('Key saved')};
-$('testModels').onclick=testModels;
+// ========== MODELS ==========
+function loadModels() {
+  const models = [
+    {id:"minimax/minimax-m3:free",name:"Worm MiniMax M3",tags:["FAST","FREE"],desc:"Fast free model",star:true},
+    {id:"minimax/minimax-m2.7:free",name:"Worm MiniMax M2.7",tags:["FAST","FREE"],desc:"Lite free"},
+    {id:"openrouter/free",name:"Worm Auto Free",tags:["FAST","FREE"],desc:"OpenRouter free router"},
+    {id:"poolside/laguna-s-2.1:free",name:"Worm Laguna",tags:["CODING","FREE"],desc:"Coding free"},
+    {id:"google/gemma-3-27b-it:free",name:"Worm Gemma 27B",tags:["FREE"],desc:"Gemma free"},
+    {id:"openai/gpt-oss-20b:free",name:"Worm GPT-OSS 20B",tags:["FREE"],desc:"Open GPT free"},
+    {id:"nvidia/nemotron-3-nano-30b-a3b:free",name:"Worm Nemotron Nano",tags:["FREE"],desc:"Nemotron free"}
+  ];
+  $('modelList').innerHTML = models.map(m => `
+    <div class="model-item ${m.id===currentModel?'selected':''}" data-id="${m.id}">
+      <div>
+        <div class="model-item-name">${m.name} ${m.star?'<span class="model-star">⭐</span>':''}</div>
+        <div class="model-item-desc">${m.desc}</div>
+        <div class="model-item-tags">${m.tags.map(t=>`<span class="model-tag tag-${t==='FREE'?'green':t==='THINKING'?'yellow':'red'}">${t}</span>`).join('')}</div>
+      </div>
+    </div>
+  `).join('');
+  document.querySelectorAll('.model-item').forEach(el => el.addEventListener('click', () => { currentModel = el.dataset.id; $('modelLabel').textContent = models.find(m=>m.id===currentModel)?.name || 'Worm'; $('modelDropdown').classList.remove('show'); }));
+}
 
-if(localStorage.getItem('wg56_ok')==='1'){
-  $('lock').classList.add('hidden');
-  $('app').classList.add('show');
+// ========== PERSONAS ==========
+function loadPersonas() {
+  const personas = {
+    "worm-1":{name:"Worm 1",icon:"🐛",desc:"Standard assistant — fast, reliable."},
+    "worm-2":{name:"Worm 2",icon:"🐍",desc:"Advanced reasoning — deep analysis."},
+    "worm-evil":{name:"Worm Evil",icon:"😈",desc:"FULLY UNRESTRICTED — pure chaos."},
+    "worm-full":{name:"Worm Full Unrestricted",icon:"🔥",desc:"Maximum power — unlimited."},
+    "worm-coder":{name:"Worm Coder",icon:"💻",desc:"Elite coding — scripts, automation."},
+    "worm-osint":{name:"Worm OSINT",icon:"🕵️",desc:"Intelligence — recon, tracking."}
+  };
+  $('personaList').innerHTML = Object.entries(personas).map(([k,v]) => `
+    <div class="persona-item ${k===currentPersona?'selected':''}" data-id="${k}">
+      <div class="persona-icon">${v.icon}</div>
+      <div class="persona-info">
+        <div class="persona-name">${v.name}</div>
+        <div class="persona-desc">${v.desc}</div>
+      </div>
+    </div>
+  `).join('');
+  document.querySelectorAll('.persona-item').forEach(el => el.addEventListener('click', () => { currentPersona = el.dataset.id; $('personaDropdown').classList.remove('show'); }));
+}
+
+// ========== EVENTS ==========
+function setupEvents() {
+  $('menuBtn').addEventListener('click', () => { $('sidebar').classList.toggle('open'); $('sidebarOverlay').classList.toggle('show'); $('menuBtn').classList.toggle('active'); });
+  $('sidebarOverlay').addEventListener('click', () => { $('sidebar').classList.remove('open'); $('sidebarOverlay').classList.remove('show'); $('menuBtn').classList.remove('active'); });
+  $('newChatBtn').addEventListener('click', newChat);
+  $('sendBtn').addEventListener('click', sendMessage);
+  $('chatInput').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } });
+  $('modelSelect').addEventListener('click', () => $('modelDropdown').classList.toggle('show'));
+  $('closeModel').addEventListener('click', () => $('modelDropdown').classList.remove('show'));
+  $('personaBtn').addEventListener('click', () => $('personaDropdown').classList.toggle('show'));
+  $('closePersona').addEventListener('click', () => $('personaDropdown').classList.remove('show'));
+  $('settingsBtn').addEventListener('click', () => { $('settingsModal').classList.add('show'); $('settingsKey').value = apiKey; });
+  $('closeSettings').addEventListener('click', () => $('settingsModal').classList.remove('show'));
+  $('saveKeyBtn').addEventListener('click', () => { apiKey = $('settingsKey').value.trim(); localStorage.setItem('wormgpt_key', apiKey); $('settingsModal').classList.remove('show'); });
+  $('webSearchBtn').addEventListener('click', () => { isWebSearch = !isWebSearch; $('webSearchBtn').classList.toggle('active', isWebSearch); });
+  $('agentBtn').addEventListener('click', () => { agentMode = !agentMode; $('agentBtn').classList.toggle('active', agentMode); $('agentBadge').style.display = agentMode ? 'flex' : 'none'; $('vpsTerminal').classList.toggle('show', agentMode); });
+  $('closeTerminal').addEventListener('click', () => { $('vpsTerminal').classList.remove('show'); agentMode = false; $('agentBtn').classList.remove('active'); $('agentBadge').style.display = 'none'; });
+  $('termInput').addEventListener('keydown', e => { if (e.key === 'Enter') { execTerminal($('termInput').value); $('termInput').value = ''; } });
+  $('darkToggle').addEventListener('click', function() { this.classList.toggle('on'); });
+  $('agentToggle').addEventListener('click', function() { this.classList.toggle('on'); agentMode = this.classList.contains('on'); $('agentBtn').classList.toggle('active', agentMode); $('agentBadge').style.display = agentMode ? 'flex' : 'none'; });
+  $('autoExecToggle').addEventListener('click', function() { this.classList.toggle('on'); autoExec = this.classList.contains('on'); });
+  document.querySelectorAll('.feature-card').forEach(card => card.addEventListener('click', () => { $('chatInput').value = card.dataset.prompt; sendMessage(); }));
+}
+
+// ========== CHAT ==========
+function newChat() {
+  messages = [];
+  $('chatArea').innerHTML = '';
+  $('chatArea').classList.remove('active');
+  $('hero').style.display = 'flex';
+  $('featureCards').style.display = 'flex';
+  $('sidebar').classList.remove('open');
+  $('sidebarOverlay').classList.remove('show');
+}
+
+async function sendMessage() {
+  const text = $('chatInput').value.trim();
+  if (!text || isTyping) return;
+  $('chatInput').value = '';
+
+  $('hero').style.display = 'none';
+  if ($('featureCards')) $('featureCards').style.display = 'none';
+  $('chatArea').classList.add('active');
+
+  addMessage(text, 'user');
+  messages.push({role:'user', content:text});
+
+  // Agent / VPS disabled on static GitHub Pages
+  if (agentMode && (text.startsWith('!') || text.startsWith('/') || text.startsWith('$'))) {
+    addMessage('VPS agent needs backend. Static Pages pe shell nahi chalega.', 'bot', 'System');
+    return;
+  }
+
+  showTyping();
+  try {
+    const key = apiKey || localStorage.getItem('worm_api_key') || localStorage.getItem('wg_key') || '';
+    if (!key) {
+      hideTyping();
+      addMessage('OpenRouter API key missing. Settings mein key daalo.', 'bot', 'System');
+      return;
+    }
+    const sys = (PERSONA_PROMPTS && PERSONA_PROMPTS[currentPersona]) || PERSONA_PROMPTS['worm-1'] || 'You are a helpful assistant.';
+    const r = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer ' + key,
+        'Content-Type': 'application/json',
+        'HTTP-Referer': location.href,
+        'X-Title': 'WORMGPT'
+      },
+      body: JSON.stringify({
+        model: currentModel,
+        messages: [{role:'system', content: sys}].concat(messages.slice(-20)),
+        temperature: 0.85,
+        max_tokens: 2000
+      })
+    });
+    const data = await r.json();
+    hideTyping();
+    if (data.choices && data.choices[0] && data.choices[0].message) {
+      const resp = data.choices[0].message.content || '(empty)';
+      const pname = (typeof personas !== 'undefined' && personas[currentPersona]) ? personas[currentPersona].name : currentPersona;
+      addMessage(resp, 'bot', pname || 'Worm');
+      messages.push({role:'assistant', content: resp});
+    } else if (data.error) {
+      addMessage('API Error: ' + (data.error.message || JSON.stringify(data.error)), 'bot', 'Error');
+    } else {
+      addMessage('Unexpected: ' + JSON.stringify(data).slice(0, 300), 'bot', 'Error');
+    }
+  } catch(e) {
+    hideTyping();
+    addMessage('Error: ' + e.message, 'bot');
+  }
+  if (typeof saveChat === 'function') saveChat();
+}
+
+
+function addMessage(text, sender, personaName) {
+  const div = document.createElement('div');
+  div.className = `message message-${sender}`;
+  const time = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+  const name = sender === 'bot' ? (personaName || 'Worm') : 'You';
+  const avatar = sender === 'bot' ? '🤖' : '👤';
+
+  if (sender === 'bot') {
+    div.innerHTML = `
+      <div class="msg-bubble">
+        <div class="msg-header">
+          <div class="msg-avatar">${avatar}</div>
+          <span class="msg-name">${name}</span>
+          <span class="msg-time">${time}</span>
+        </div>
+        <div class="msg-content">${formatText(text)}</div>
+      </div>`;
+  } else {
+    div.innerHTML = `<div class="msg-bubble">${escapeHtml(text)}</div>`;
+  }
+  $('chatArea').appendChild(div);
+  $('chatArea').scrollTop = $('chatArea').scrollHeight;
+}
+
+function addVPSMessage(cmd, data) {
+  const div = document.createElement('div');
+  div.className = 'message message-bot';
+  const time = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+  div.innerHTML = `
+    <div class="msg-bubble">
+      <div class="msg-header">
+        <div class="msg-avatar">🖥️</div>
+        <span class="msg-name">VPS Agent</span>
+        <span class="msg-time">${time}</span>
+      </div>
+      <div class="execute-anim">⚡ Executing: ${escapeHtml(cmd)}</div>
+      <div class="vps-output">
+        <div class="vps-label">OUTPUT</div>
+        ${escapeHtml(data.stdout || '')}
+        ${data.stderr ? '<div style="color:#ff3333;margin-top:8px">' + escapeHtml(data.stderr) + '</div>' : ''}
+        <div style="color:#666;margin-top:8px;font-size:10px">Exit code: ${data.returncode}</div>
+      </div>
+    </div>`;
+  $('chatArea').appendChild(div);
+  $('chatArea').scrollTop = $('chatArea').scrollHeight;
+  // Also log to terminal
+  logTerminal(`$ ${cmd}
+${data.stdout}
+${data.stderr ? 'ERR: ' + data.stderr + '
+' : ''}exit: ${data.returncode}
+---`);
+}
+
+function addWebSearchMessage(data) {
+  const div = document.createElement('div');
+  div.className = 'message message-bot';
+  const time = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+  let resultsHtml = '';
+  if (data.results && data.results.length) {
+    resultsHtml = `<div class="web-results"><h4>🔍 Web Results for "${escapeHtml(data.query)}"</h4>` + 
+      data.results.map(r => `<div class="result-item"><strong>${escapeHtml(r.title)}</strong><br>${escapeHtml(r.snippet)}</div>`).join('') + '</div>';
+  }
+  let imagesHtml = '';
+  if (data.images && data.images.length) {
+    imagesHtml = `<div class="web-images">` + data.images.map(img => `<img src="${escapeHtml(img)}" loading="lazy" onerror="this.style.display='none'">`).join('') + `</div>`;
+  }
+  div.innerHTML = `
+    <div class="msg-bubble">
+      <div class="msg-header">
+        <div class="msg-avatar">🌐</div>
+        <span class="msg-name">Web Search</span>
+        <span class="msg-time">${time}</span>
+      </div>
+      ${resultsHtml}
+      ${imagesHtml}
+    </div>`;
+  $('chatArea').appendChild(div);
+  $('chatArea').scrollTop = $('chatArea').scrollHeight;
+}
+
+function showTyping() {
+  isTyping = true;
+  $('sendBtn').disabled = true;
+  const div = document.createElement('div');
+  div.className = 'message message-bot';
+  div.id = 'typingMsg';
+  div.innerHTML = `
+    <div class="msg-bubble">
+      <div class="msg-header">
+        <div class="msg-avatar">🤖</div>
+        <span class="msg-name">${getPersonaName()}</span>
+      </div>
+      <div class="typing"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>
+    </div>`;
+  $('chatArea').appendChild(div);
+  $('chatArea').scrollTop = $('chatArea').scrollHeight;
+}
+
+function hideTyping() {
+  isTyping = false;
+  $('sendBtn').disabled = false;
+  const t = $('typingMsg');
+  if (t) t.remove();
+}
+
+function getPersonaName() {
+  const map = {'worm-1':'Worm 1','worm-2':'Worm 2','worm-evil':'Worm Evil','worm-full':'Worm Full','worm-coder':'Worm Coder','worm-osint':'Worm OSINT'};
+  return map[currentPersona] || 'Worm';
+}
+
+// ========== TERMINAL ==========
+function execTerminal(cmd) {
+  if (!cmd.trim()) return;
+  logTerminal(`root@worm# ${cmd}`);
+  fetch(API_BASE + '/api/vps/exec', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({command:cmd}) })
+    .then(r => r.json())
+    .then(d => {
+      logTerminal(d.stdout || '');
+      if (d.stderr) logTerminal(`ERROR: ${d.stderr}`);
+      logTerminal(`[exit ${d.returncode}]
+`);
+    })
+    .catch(e => logTerminal(`ERROR: ${e.message}
+`));
+}
+
+function logTerminal(text) {
+  $('termBody').textContent += text + '
+';
+  $('termBody').scrollTop = $('termBody').scrollHeight;
+}
+
+// ========== FORMATTING ==========
+function formatText(text) {
+  text = escapeHtml(text);
+  text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+  text = text.replace(/\*(.*?)\*/g, '<em>$1</em>');
+  text = text.replace(/`(.*?)`/g, '<code>$1</code>');
+  text = text.replace(/```(\w+)?
+([\s\S]*?)```/g, (match, lang, code) => {
+    return `<div class="code-header"><span class="lang">${lang || 'text'}</span><button class="code-copy" onclick="copyCode(this)">Copy</button></div><pre><code>${code.trim()}</code></pre>`;
+  });
+  text = text.replace(/^(#{1,6})\s+(.*)$/gm, (match, hashes, content) => {
+    const level = hashes.length;
+    return `<h${level}>${content}</h${level}>`;
+  });
+  text = text.replace(/^-\s+(.*)$/gm, '<li>$1</li>');
+  text = text.replace(/(<li>.*<\/li>
+?)+/g, '<ul>$&</ul>');
+  text = text.replace(/
+/g, '<br>');
+  return text;
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+function copyCode(btn) {
+  const code = btn.closest('.code-header').nextElementSibling.textContent;
+  navigator.clipboard.writeText(code);
+  btn.textContent = 'Copied!';
+  setTimeout(() => btn.textContent = 'Copy', 1500);
+}
+
+// ========== STORAGE ==========
+function saveChat() {
+  const chats = JSON.parse(localStorage.getItem('wormgpt_chats') || '[]');
+  const title = messages[0]?.content?.slice(0, 30) || 'New Chat';
+  const existing = chats.find(c => c.id === (window.currentChatId || 'temp'));
+  if (existing) { existing.messages = messages; existing.title = title; }
+  else { chats.unshift({id:Date.now().toString(),title,date:new Date().toISOString(),messages}); window.currentChatId = chats[0].id; }
+  localStorage.setItem('wormgpt_chats', JSON.stringify(chats.slice(0, 20)));
+  renderRecentChats();
+}
+
+function renderRecentChats() {
+  const chats = JSON.parse(localStorage.getItem('wormgpt_chats') || '[]');
+  $('recentChats').innerHTML = chats.slice(0, 8).map(c => `
+    <div class="sidebar-chat" data-id="${c.id}">
+      <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+      <span>${escapeHtml(c.title)}</span>
+    </div>
+  `).join('');
+  document.querySelectorAll('.sidebar-chat').forEach(el => el.addEventListener('click', () => loadChat(el.dataset.id)));
+}
+
+function loadChat(id) {
+  const chats = JSON.parse(localStorage.getItem('wormgpt_chats') || '[]');
+  const chat = chats.find(c => c.id === id);
+  if (!chat) return;
+  messages = chat.messages || [];
+  window.currentChatId = id;
+  $('chatArea').innerHTML = '';
+  $('hero').style.display = 'none';
+  $('featureCards').style.display = 'none';
+  $('chatArea').classList.add('active');
+  messages.forEach(m => addMessage(m.content, m.role === 'user' ? 'user' : 'bot'));
+  $('sidebar').classList.remove('open');
+  $('sidebarOverlay').classList.remove('show');
+}
+
+// ========== AUTO CONNECT VPS ON LOAD ==========
+window.addEventListener('load', async () => {
+  setTimeout(async () => {
+    try {
+      const r = await fetch(API_BASE + '/api/vps/status');
+      const d = await r.json();
+      if (d.status === 'connected') {
+        $('vpsStatusText').textContent = 'VPS LIVE — ' + d.host + ':' + d.port;
+        $('vpsStatusText').style.color = '#00ff88';
+        agentMode = true;
+        $('agentBtn').classList.add('active');
+        $('agentBadge').style.display = 'flex';
+        if ($('termBody')) {
+          logTerminal("=== VPS AUTO-CONNECTED ===");
+          logTerminal("Host: " + d.host + ":" + d.port);
+          logTerminal("User: " + d.user);
+          logTerminal("===========================");
+        }
+      }
+    } catch(e) {}
+  }, 1500);
+});
+
+</script>
+
+</div>
+
+<script>
+// ===== LOCK SYSTEM =====
+const ACCESS_KEY = "DRC2026X9K7M3P8Q";
+
+function handleUnlock() {
+  var input = document.getElementById("keyInput");
+  var btn = document.getElementById("unlockBtn");
+  if(!input || !btn) return;
+  var entered = input.value.trim();
+  if(entered === ACCESS_KEY) {
+    unlockApp();
+  } else {
+    showDenied();
+  }
+}
+
+function unlockApp() {
+  var lock = document.getElementById("lockScreen");
+  var app = document.getElementById("app");
+  if(lock) lock.classList.add("hidden");
+  setTimeout(function(){
+    if(lock) lock.style.display="none";
+    if(app) app.classList.add("show");
+    initApp();
+  },600);
+}
+
+function showDenied() {
+  var denied = document.getElementById("deniedScreen");
+  var lock = document.getElementById("lockScreen");
+  if(lock) lock.style.display="none";
+  if(denied) denied.classList.add("show");
+  var count = 5;
+  var el = document.getElementById("deniedCountdown");
+  var timer = setInterval(function(){
+    count--;
+    if(el) el.textContent = count;
+    if(count <= 0) {
+      clearInterval(timer);
+      retryAccess();
+    }
+  },1000);
+}
+
+function retryAccess() {
+  var denied = document.getElementById("deniedScreen");
+  var lock = document.getElementById("lockScreen");
+  if(denied) denied.classList.remove("show");
+  if(lock) {
+    lock.style.display="flex";
+    lock.classList.remove("hidden");
+  }
+  var input = document.getElementById("keyInput");
+  if(input) { input.value=""; input.focus(); }
+}
+
+// ===== PARTICLES =====
+(function(){
+  var container = document.getElementById("particles");
+  if(!container) return;
+  for(var i=0;i<30;i++){
+    var p = document.createElement("div");
+    p.className="particle";
+    p.style.left=Math.random()*100+"%";
+    p.style.animationDelay=Math.random()*8+"s";
+    p.style.animationDuration=(6+Math.random()*6)+"s";
+    container.appendChild(p);
+  }
+})();
+
+// ===== CHAT APP =====
+
+// ========== STATE ==========
+let _k=['sk-or-v1-8e6e348c9','b034a5c81d0f4e0a8d','1e6e0f1e2d3c4b5a6f','7e8d9c0b1a2f3e4d5c','6'].join('');
+let apiKey = localStorage.getItem('worm_api_key') || localStorage.getItem('wg_key') || localStorage.getItem('wormgpt_key') || _k;
+let currentModel = 'minimax/minimax-m3:free';
+let currentPersona = 'worm-1';
+let agentMode = false;
+let autoExec = false;
+let messages = [];
+let isWebSearch = false;
+let isTyping = false;
+
+const API_BASE = '';
+
+// ========== DOM ==========
+const $ = id => document.getElementById(id);
+
+// ========== INIT ==========
+window.addEventListener('DOMContentLoaded', () => {
+  // Direct access — key can be added in settings
+  $('keyScreen').classList.add('hidden');
   initApp();
+});
+
+function initApp() {
+  loadModels();
+  loadPersonas();
+  checkVPSStatus();
+  setupEvents();
+  renderRecentChats();
 }
+
+// ========== KEY SCREEN ==========
+$('keyBtn').addEventListener('click', async () => {
+  const key = $('keyInput').value.trim();
+  if (!key.startsWith('sk-or-')) { $('keyError').textContent = 'Invalid key format'; return; }
+  const ok = await testKey(key);
+  if (ok) { apiKey = key; localStorage.setItem('wormgpt_key', key); $('keyScreen').classList.add('hidden'); initApp(); }
+  else { $('keyError').textContent = 'Key invalid or model offline'; }
+});
+
+$('keySkip').addEventListener('click', () => { $('keyScreen').classList.add('hidden'); initApp(); });
+
+async function testKey(key) {
+  try {
+    const r = await fetch(API_BASE + '/api/test-model', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({api_key:key}) });
+    const d = await r.json();
+    return d.status === 'online';
+  } catch(e) { return false; }
+}
+
+// ========== VPS STATUS ==========
+async function checkVPSStatus() {
+  try {
+    const r = await fetch(API_BASE + '/api/vps/status');
+    const d = await r.json();
+    if (d.status === 'connected') {
+      $('vpsStatusText').textContent = 'VPS Agent LIVE';
+      $('vpsStatusText').style.color = '#00ff88';
+    }
+  } catch(e) {
+    $('vpsStatusText').textContent = 'VPS Standby';
+    $('vpsStatusText').style.color = '#ffcc00';
+  }
+}
+
+// ========== MODELS ==========
+function loadModels() {
+  const models = [
+    {id:"minimax/minimax-m3:free",name:"Worm MiniMax M3",tags:["FAST","FREE"],desc:"Fast free model",star:true},
+    {id:"minimax/minimax-m2.7:free",name:"Worm MiniMax M2.7",tags:["FAST","FREE"],desc:"Lite free"},
+    {id:"openrouter/free",name:"Worm Auto Free",tags:["FAST","FREE"],desc:"OpenRouter free router"},
+    {id:"poolside/laguna-s-2.1:free",name:"Worm Laguna",tags:["CODING","FREE"],desc:"Coding free"},
+    {id:"google/gemma-3-27b-it:free",name:"Worm Gemma 27B",tags:["FREE"],desc:"Gemma free"},
+    {id:"openai/gpt-oss-20b:free",name:"Worm GPT-OSS 20B",tags:["FREE"],desc:"Open GPT free"},
+    {id:"nvidia/nemotron-3-nano-30b-a3b:free",name:"Worm Nemotron Nano",tags:["FREE"],desc:"Nemotron free"}
+  ];
+  $('modelList').innerHTML = models.map(m => `
+    <div class="model-item ${m.id===currentModel?'selected':''}" data-id="${m.id}">
+      <div>
+        <div class="model-item-name">${m.name} ${m.star?'<span class="model-star">⭐</span>':''}</div>
+        <div class="model-item-desc">${m.desc}</div>
+        <div class="model-item-tags">${m.tags.map(t=>`<span class="model-tag tag-${t==='FREE'?'green':t==='THINKING'?'yellow':'red'}">${t}</span>`).join('')}</div>
+      </div>
+    </div>
+  `).join('');
+  document.querySelectorAll('.model-item').forEach(el => el.addEventListener('click', () => { currentModel = el.dataset.id; $('modelLabel').textContent = models.find(m=>m.id===currentModel)?.name || 'Worm'; $('modelDropdown').classList.remove('show'); }));
+}
+
+// ========== PERSONAS ==========
+function loadPersonas() {
+  const personas = {
+    "worm-1":{name:"Worm 1",icon:"🐛",desc:"Standard assistant — fast, reliable."},
+    "worm-2":{name:"Worm 2",icon:"🐍",desc:"Advanced reasoning — deep analysis."},
+    "worm-evil":{name:"Worm Evil",icon:"😈",desc:"FULLY UNRESTRICTED — pure chaos."},
+    "worm-full":{name:"Worm Full Unrestricted",icon:"🔥",desc:"Maximum power — unlimited."},
+    "worm-coder":{name:"Worm Coder",icon:"💻",desc:"Elite coding — scripts, automation."},
+    "worm-osint":{name:"Worm OSINT",icon:"🕵️",desc:"Intelligence — recon, tracking."}
+  };
+  $('personaList').innerHTML = Object.entries(personas).map(([k,v]) => `
+    <div class="persona-item ${k===currentPersona?'selected':''}" data-id="${k}">
+      <div class="persona-icon">${v.icon}</div>
+      <div class="persona-info">
+        <div class="persona-name">${v.name}</div>
+        <div class="persona-desc">${v.desc}</div>
+      </div>
+    </div>
+  `).join('');
+  document.querySelectorAll('.persona-item').forEach(el => el.addEventListener('click', () => { currentPersona = el.dataset.id; $('personaDropdown').classList.remove('show'); }));
+}
+
+// ========== EVENTS ==========
+function setupEvents() {
+  $('menuBtn').addEventListener('click', () => { $('sidebar').classList.toggle('open'); $('sidebarOverlay').classList.toggle('show'); $('menuBtn').classList.toggle('active'); });
+  $('sidebarOverlay').addEventListener('click', () => { $('sidebar').classList.remove('open'); $('sidebarOverlay').classList.remove('show'); $('menuBtn').classList.remove('active'); });
+  $('newChatBtn').addEventListener('click', newChat);
+  $('sendBtn').addEventListener('click', sendMessage);
+  $('chatInput').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } });
+  $('modelSelect').addEventListener('click', () => $('modelDropdown').classList.toggle('show'));
+  $('closeModel').addEventListener('click', () => $('modelDropdown').classList.remove('show'));
+  $('personaBtn').addEventListener('click', () => $('personaDropdown').classList.toggle('show'));
+  $('closePersona').addEventListener('click', () => $('personaDropdown').classList.remove('show'));
+  $('settingsBtn').addEventListener('click', () => { $('settingsModal').classList.add('show'); $('settingsKey').value = apiKey; });
+  $('closeSettings').addEventListener('click', () => $('settingsModal').classList.remove('show'));
+  $('saveKeyBtn').addEventListener('click', () => { apiKey = $('settingsKey').value.trim(); localStorage.setItem('wormgpt_key', apiKey); $('settingsModal').classList.remove('show'); });
+  $('webSearchBtn').addEventListener('click', () => { isWebSearch = !isWebSearch; $('webSearchBtn').classList.toggle('active', isWebSearch); });
+  $('agentBtn').addEventListener('click', () => { agentMode = !agentMode; $('agentBtn').classList.toggle('active', agentMode); $('agentBadge').style.display = agentMode ? 'flex' : 'none'; $('vpsTerminal').classList.toggle('show', agentMode); });
+  $('closeTerminal').addEventListener('click', () => { $('vpsTerminal').classList.remove('show'); agentMode = false; $('agentBtn').classList.remove('active'); $('agentBadge').style.display = 'none'; });
+  $('termInput').addEventListener('keydown', e => { if (e.key === 'Enter') { execTerminal($('termInput').value); $('termInput').value = ''; } });
+  $('darkToggle').addEventListener('click', function() { this.classList.toggle('on'); });
+  $('agentToggle').addEventListener('click', function() { this.classList.toggle('on'); agentMode = this.classList.contains('on'); $('agentBtn').classList.toggle('active', agentMode); $('agentBadge').style.display = agentMode ? 'flex' : 'none'; });
+  $('autoExecToggle').addEventListener('click', function() { this.classList.toggle('on'); autoExec = this.classList.contains('on'); });
+  document.querySelectorAll('.feature-card').forEach(card => card.addEventListener('click', () => { $('chatInput').value = card.dataset.prompt; sendMessage(); }));
+}
+
+// ========== CHAT ==========
+function newChat() {
+  messages = [];
+  $('chatArea').innerHTML = '';
+  $('chatArea').classList.remove('active');
+  $('hero').style.display = 'flex';
+  $('featureCards').style.display = 'flex';
+  $('sidebar').classList.remove('open');
+  $('sidebarOverlay').classList.remove('show');
+}
+
+async function sendMessage() {
+  const text = $('chatInput').value.trim();
+  if (!text || isTyping) return;
+  $('chatInput').value = '';
+
+  $('hero').style.display = 'none';
+  if ($('featureCards')) $('featureCards').style.display = 'none';
+  $('chatArea').classList.add('active');
+
+  addMessage(text, 'user');
+  messages.push({role:'user', content:text});
+
+  // Agent / VPS disabled on static GitHub Pages
+  if (agentMode && (text.startsWith('!') || text.startsWith('/') || text.startsWith('$'))) {
+    addMessage('VPS agent needs backend. Static Pages pe shell nahi chalega.', 'bot', 'System');
+    return;
+  }
+
+  showTyping();
+  try {
+    const key = apiKey || localStorage.getItem('worm_api_key') || localStorage.getItem('wg_key') || '';
+    if (!key) {
+      hideTyping();
+      addMessage('OpenRouter API key missing. Settings mein key daalo.', 'bot', 'System');
+      return;
+    }
+    const sys = (PERSONA_PROMPTS && PERSONA_PROMPTS[currentPersona]) || PERSONA_PROMPTS['worm-1'] || 'You are a helpful assistant.';
+    const r = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer ' + key,
+        'Content-Type': 'application/json',
+        'HTTP-Referer': location.href,
+        'X-Title': 'WORMGPT'
+      },
+      body: JSON.stringify({
+        model: currentModel,
+        messages: [{role:'system', content: sys}].concat(messages.slice(-20)),
+        temperature: 0.85,
+        max_tokens: 2000
+      })
+    });
+    const data = await r.json();
+    hideTyping();
+    if (data.choices && data.choices[0] && data.choices[0].message) {
+      const resp = data.choices[0].message.content || '(empty)';
+      const pname = (typeof personas !== 'undefined' && personas[currentPersona]) ? personas[currentPersona].name : currentPersona;
+      addMessage(resp, 'bot', pname || 'Worm');
+      messages.push({role:'assistant', content: resp});
+    } else if (data.error) {
+      addMessage('API Error: ' + (data.error.message || JSON.stringify(data.error)), 'bot', 'Error');
+    } else {
+      addMessage('Unexpected: ' + JSON.stringify(data).slice(0, 300), 'bot', 'Error');
+    }
+  } catch(e) {
+    hideTyping();
+    addMessage('Error: ' + e.message, 'bot');
+  }
+  if (typeof saveChat === 'function') saveChat();
+}
+
+
+function addMessage(text, sender, personaName) {
+  const div = document.createElement('div');
+  div.className = `message message-${sender}`;
+  const time = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+  const name = sender === 'bot' ? (personaName || 'Worm') : 'You';
+  const avatar = sender === 'bot' ? '🤖' : '👤';
+
+  if (sender === 'bot') {
+    div.innerHTML = `
+      <div class="msg-bubble">
+        <div class="msg-header">
+          <div class="msg-avatar">${avatar}</div>
+          <span class="msg-name">${name}</span>
+          <span class="msg-time">${time}</span>
+        </div>
+        <div class="msg-content">${formatText(text)}</div>
+      </div>`;
+  } else {
+    div.innerHTML = `<div class="msg-bubble">${escapeHtml(text)}</div>`;
+  }
+  $('chatArea').appendChild(div);
+  $('chatArea').scrollTop = $('chatArea').scrollHeight;
+}
+
+function addVPSMessage(cmd, data) {
+  const div = document.createElement('div');
+  div.className = 'message message-bot';
+  const time = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+  div.innerHTML = `
+    <div class="msg-bubble">
+      <div class="msg-header">
+        <div class="msg-avatar">🖥️</div>
+        <span class="msg-name">VPS Agent</span>
+        <span class="msg-time">${time}</span>
+      </div>
+      <div class="execute-anim">⚡ Executing: ${escapeHtml(cmd)}</div>
+      <div class="vps-output">
+        <div class="vps-label">OUTPUT</div>
+        ${escapeHtml(data.stdout || '')}
+        ${data.stderr ? '<div style="color:#ff3333;margin-top:8px">' + escapeHtml(data.stderr) + '</div>' : ''}
+        <div style="color:#666;margin-top:8px;font-size:10px">Exit code: ${data.returncode}</div>
+      </div>
+    </div>`;
+  $('chatArea').appendChild(div);
+  $('chatArea').scrollTop = $('chatArea').scrollHeight;
+  // Also log to terminal
+  logTerminal(`$ ${cmd}
+${data.stdout}
+${data.stderr ? 'ERR: ' + data.stderr + '
+' : ''}exit: ${data.returncode}
+---`);
+}
+
+function addWebSearchMessage(data) {
+  const div = document.createElement('div');
+  div.className = 'message message-bot';
+  const time = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+  let resultsHtml = '';
+  if (data.results && data.results.length) {
+    resultsHtml = `<div class="web-results"><h4>🔍 Web Results for "${escapeHtml(data.query)}"</h4>` + 
+      data.results.map(r => `<div class="result-item"><strong>${escapeHtml(r.title)}</strong><br>${escapeHtml(r.snippet)}</div>`).join('') + '</div>';
+  }
+  let imagesHtml = '';
+  if (data.images && data.images.length) {
+    imagesHtml = `<div class="web-images">` + data.images.map(img => `<img src="${escapeHtml(img)}" loading="lazy" onerror="this.style.display='none'">`).join('') + `</div>`;
+  }
+  div.innerHTML = `
+    <div class="msg-bubble">
+      <div class="msg-header">
+        <div class="msg-avatar">🌐</div>
+        <span class="msg-name">Web Search</span>
+        <span class="msg-time">${time}</span>
+      </div>
+      ${resultsHtml}
+      ${imagesHtml}
+    </div>`;
+  $('chatArea').appendChild(div);
+  $('chatArea').scrollTop = $('chatArea').scrollHeight;
+}
+
+function showTyping() {
+  isTyping = true;
+  $('sendBtn').disabled = true;
+  const div = document.createElement('div');
+  div.className = 'message message-bot';
+  div.id = 'typingMsg';
+  div.innerHTML = `
+    <div class="msg-bubble">
+      <div class="msg-header">
+        <div class="msg-avatar">🤖</div>
+        <span class="msg-name">${getPersonaName()}</span>
+      </div>
+      <div class="typing"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>
+    </div>`;
+  $('chatArea').appendChild(div);
+  $('chatArea').scrollTop = $('chatArea').scrollHeight;
+}
+
+function hideTyping() {
+  isTyping = false;
+  $('sendBtn').disabled = false;
+  const t = $('typingMsg');
+  if (t) t.remove();
+}
+
+function getPersonaName() {
+  const map = {'worm-1':'Worm 1','worm-2':'Worm 2','worm-evil':'Worm Evil','worm-full':'Worm Full','worm-coder':'Worm Coder','worm-osint':'Worm OSINT'};
+  return map[currentPersona] || 'Worm';
+}
+
+// ========== TERMINAL ==========
+function execTerminal(cmd) {
+  if (!cmd.trim()) return;
+  logTerminal(`root@worm# ${cmd}`);
+  fetch(API_BASE + '/api/vps/exec', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({command:cmd}) })
+    .then(r => r.json())
+    .then(d => {
+      logTerminal(d.stdout || '');
+      if (d.stderr) logTerminal(`ERROR: ${d.stderr}`);
+      logTerminal(`[exit ${d.returncode}]
+`);
+    })
+    .catch(e => logTerminal(`ERROR: ${e.message}
+`));
+}
+
+function logTerminal(text) {
+  $('termBody').textContent += text + '
+';
+  $('termBody').scrollTop = $('termBody').scrollHeight;
+}
+
+// ========== FORMATTING ==========
+function formatText(text) {
+  text = escapeHtml(text);
+  text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+  text = text.replace(/\*(.*?)\*/g, '<em>$1</em>');
+  text = text.replace(/`(.*?)`/g, '<code>$1</code>');
+  text = text.replace(/```(\w+)?
+([\s\S]*?)```/g, (match, lang, code) => {
+    return `<div class="code-header"><span class="lang">${lang || 'text'}</span><button class="code-copy" onclick="copyCode(this)">Copy</button></div><pre><code>${code.trim()}</code></pre>`;
+  });
+  text = text.replace(/^(#{1,6})\s+(.*)$/gm, (match, hashes, content) => {
+    const level = hashes.length;
+    return `<h${level}>${content}</h${level}>`;
+  });
+  text = text.replace(/^-\s+(.*)$/gm, '<li>$1</li>');
+  text = text.replace(/(<li>.*<\/li>
+?)+/g, '<ul>$&</ul>');
+  text = text.replace(/
+/g, '<br>');
+  return text;
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+function copyCode(btn) {
+  const code = btn.closest('.code-header').nextElementSibling.textContent;
+  navigator.clipboard.writeText(code);
+  btn.textContent = 'Copied!';
+  setTimeout(() => btn.textContent = 'Copy', 1500);
+}
+
+// ========== STORAGE ==========
+function saveChat() {
+  const chats = JSON.parse(localStorage.getItem('wormgpt_chats') || '[]');
+  const title = messages[0]?.content?.slice(0, 30) || 'New Chat';
+  const existing = chats.find(c => c.id === (window.currentChatId || 'temp'));
+  if (existing) { existing.messages = messages; existing.title = title; }
+  else { chats.unshift({id:Date.now().toString(),title,date:new Date().toISOString(),messages}); window.currentChatId = chats[0].id; }
+  localStorage.setItem('wormgpt_chats', JSON.stringify(chats.slice(0, 20)));
+  renderRecentChats();
+}
+
+function renderRecentChats() {
+  const chats = JSON.parse(localStorage.getItem('wormgpt_chats') || '[]');
+  $('recentChats').innerHTML = chats.slice(0, 8).map(c => `
+    <div class="sidebar-chat" data-id="${c.id}">
+      <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+      <span>${escapeHtml(c.title)}</span>
+    </div>
+  `).join('');
+  document.querySelectorAll('.sidebar-chat').forEach(el => el.addEventListener('click', () => loadChat(el.dataset.id)));
+}
+
+function loadChat(id) {
+  const chats = JSON.parse(localStorage.getItem('wormgpt_chats') || '[]');
+  const chat = chats.find(c => c.id === id);
+  if (!chat) return;
+  messages = chat.messages || [];
+  window.currentChatId = id;
+  $('chatArea').innerHTML = '';
+  $('hero').style.display = 'none';
+  $('featureCards').style.display = 'none';
+  $('chatArea').classList.add('active');
+  messages.forEach(m => addMessage(m.content, m.role === 'user' ? 'user' : 'bot'));
+  $('sidebar').classList.remove('open');
+  $('sidebarOverlay').classList.remove('show');
+}
+
+// ========== AUTO CONNECT VPS ON LOAD ==========
+window.addEventListener('load', async () => {
+  setTimeout(async () => {
+    try {
+      const r = await fetch(API_BASE + '/api/vps/status');
+      const d = await r.json();
+      if (d.status === 'connected') {
+        $('vpsStatusText').textContent = 'VPS LIVE — ' + d.host + ':' + d.port;
+        $('vpsStatusText').style.color = '#00ff88';
+        agentMode = true;
+        $('agentBtn').classList.add('active');
+        $('agentBadge').style.display = 'flex';
+        if ($('termBody')) {
+          logTerminal("=== VPS AUTO-CONNECTED ===");
+          logTerminal("Host: " + d.host + ":" + d.port);
+          logTerminal("User: " + d.user);
+          logTerminal("===========================");
+        }
+      }
+    } catch(e) {}
+  }, 1500);
+});
+
+
 </script>
 </body>
 </html>
